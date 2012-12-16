@@ -3,15 +3,14 @@ var client = dgram.createSocket("udp4");
 var serverip = process.argv[2];
 var serverPort = 19132;
 var ipArray = { };
-var logAllPackets = true;
 client.bind(19132);
 client.setBroadcast(true);
 
 function packetLog(srcip, srcPort, destip, destPort, type)
 {
     //Only log these packets
-    filter = Array();
-    if (filter.indexOf(type) !== -1 || logAllPackets === true)
+    filter = Array("all");
+    if (filter.indexOf(type) !== -1 || filter.indexOf("all") !== -1)
     {
         console.log("received: 0x" + type + " from " + srcip + ":" + srcPort
             + ", sending : 0x" + type + " to " + destip + ":" + destPort);
