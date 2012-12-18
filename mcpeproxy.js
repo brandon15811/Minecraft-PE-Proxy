@@ -27,21 +27,22 @@ function packetReceive(msg, rinfo, sendPort)
     type = msg.toString('hex').substr(0,2)
     if (rinfo.address !== serverip)
     {
-       var portTime = new Date();
-       ipArray[rinfo.port] = { 'port': rinfo.port, 'ip': rinfo.address, 
-           'time': portTime.getTime(), 'socket': dgram.createSocket("udp4")};
-       ipArray[rinfo.port].socket.bind(rinfo.port);
-       ipArray[rinfo.port].socket.on("message", function(msgg, rinfoo)
-       {
-           packetReceive(msgg, rinfoo, ipArray[rinfo.port]['port']);
-       });
-           
+        var portTime = new Date();
+        ipArray[rinfo.port] = { 'port': rinfo.port, 'ip': rinfo.address, 
+            'time': portTime.getTime(), 'socket': dgram.createSocket("udp4")};
+            
+        ipArray[rinfo.port].socket.bind(rinfo.port);
+        ipArray[rinfo.port].socket.on("message", function(msgg, rinfoo)
+        {
+            packetReceive(msgg, rinfoo, ipArray[rinfo.port]['port']);
+        });
+            
     }
     if (rinfo.address !== serverip)
     {
-       packetLog(rinfo.address, rinfo.port, serverip, serverPort, type);
-       ipArray[rinfo.port].socket.send(msg, 0, msg.length, serverPort, 
-           serverip);
+        packetLog(rinfo.address, rinfo.port, serverip, serverPort, type);
+        ipArray[rinfo.port].socket.send(msg, 0, msg.length, serverPort, 
+            serverip);
     }
     else
     {
@@ -49,9 +50,9 @@ function packetReceive(msg, rinfo, sendPort)
         //Measured in milliseconds
         if ((currentTime - ipArray[sendPort]['time']) > 30000)
         {
-             console.log("No packets from " + key + ", removing device");
-             ipArray[sendPort].socket.close();
-             delete ipArray[sendPort];
+            console.log("No packets from " + key + ", removing device");
+            ipArray[sendPort].socket.close();
+            delete ipArray[sendPort];
         }
         packetLog(rinfo.address, rinfo.port, ipArray[sendPort]['ip'], ipArray[sendPort]['port'], 
             type);
