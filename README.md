@@ -9,6 +9,6 @@ Usage
 ```
 node mcpeproxy.js <server ip>
 ```
-Where <server ip> is the ip of the server to connect to
+Where `<server ip>` is the ip of the server to connect to
 
 More detailed documentation will be added when this is more complete
