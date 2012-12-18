@@ -28,15 +28,21 @@ function packetReceive(msg, rinfo, sendPort)
     if (rinfo.address !== serverip)
     {
         var portTime = new Date();
-        ipArray[rinfo.port] = { 'port': rinfo.port, 'ip': rinfo.address, 
-            'time': portTime.getTime(), 'socket': dgram.createSocket("udp4")};
-            
-        ipArray[rinfo.port].socket.bind(rinfo.port);
-        ipArray[rinfo.port].socket.on("message", function(msgg, rinfoo)
+        if (typeof(ipArray[rinfo.port]) === 'undefined')
         {
-            packetReceive(msgg, rinfoo, ipArray[rinfo.port]['port']);
-        });
-            
+            ipArray[rinfo.port] = { 'port': rinfo.port, 'ip': rinfo.address, 
+                'time': portTime.getTime(), 'socket': dgram.createSocket("udp4")};
+            ipArray[rinfo.port].socket.bind(rinfo.port);
+            ipArray[rinfo.port].socket.on("message", function(msgg, rinfoo)
+            {
+                packetReceive(msgg, rinfoo, ipArray[rinfo.port]['port']);
+            });    
+        }
+        else
+        {
+            ipArray[rinfo.port]['time'] == portTime
+        }
+        
     }
     if (rinfo.address !== serverip)
     {
@@ -50,14 +56,18 @@ function packetReceive(msg, rinfo, sendPort)
         //Measured in milliseconds
         if ((currentTime - ipArray[sendPort]['time']) > 30000)
         {
-            console.log("No packets from " + key + ", removing device");
+            console.log("No packets from " + ipArray[sendPort]['ip'] + ":" + 
+                ipArray[sendPort]['port'] + ", removing device");
             ipArray[sendPort].socket.close();
             delete ipArray[sendPort];
         }
-        packetLog(rinfo.address, rinfo.port, ipArray[sendPort]['ip'], ipArray[sendPort]['port'], 
-            type);
-        //console.log("Minecraft port for " + ipArray[sendPort]['ip'] + ": " + 
-        //    ipArray[sendPort]['port']);
-        client.send(msg, 0, msg.length, ipArray[sendPort]['port'], ipArray[sendPort]['ip']);
+        else
+        {
+            packetLog(rinfo.address, rinfo.port, ipArray[sendPort]['ip'], 
+                ipArray[sendPort]['port'], type);
+            //console.log("Minecraft port for " + ipArray[sendPort]['ip'] + ": " + 
+            //    ipArray[sendPort]['port']);
+            client.send(msg, 0, msg.length, ipArray[sendPort]['port'], ipArray[sendPort]['ip']);
+        }
     }
 }
