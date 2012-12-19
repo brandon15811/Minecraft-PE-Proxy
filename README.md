@@ -7,8 +7,10 @@ Usage
 =====
 
 ```
-node mcpeproxy.js <server ip>
+node mcpeproxy.js --serverip <server ip>
 ```
 Where `<server ip>` is the ip of the server to connect to
+The ip will be saved into the config file
+(Also can be specified via the environment variable "serverip")
 
 More detailed documentation will be added when this is more complete
