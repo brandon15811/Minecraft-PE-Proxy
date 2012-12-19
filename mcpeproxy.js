@@ -1,10 +1,44 @@
 var dgram = require('dgram');
-var client = dgram.createSocket("udp4");
-var serverip = process.argv[2];
-var serverPort = 19132;
+var nconf = require('nconf');
+var path = require('path');
+var fs = require('fs');
+var configPath = path.join(__dirname, 'config.json')
 var ipArray = { };
-client.bind(19132);
-client.setBroadcast(true);
+
+//Read config from command line arguments, environment variables, and the config file
+//(each one takes precedence over the next)
+if (!fs.existsSync(configPath))
+{
+    fs.writeFileSync(configPath, '{}');
+}
+nconf.argv().env().file({ file: configPath });
+nconf.defaults({
+    'serverPort': '19132',
+    'proxyPort': '19132'
+});
+
+nconf.set('serverPort', nconf.get('serverPort'));
+nconf.set('proxyPort', nconf.get('proxyPort'));
+
+var serverip = nconf.get('serverip');
+var serverPort = nconf.get('serverPort');
+
+if (typeof(serverip) === 'undefined')
+{
+    console.error('No server ip set. Set one with --serverip <ip> (IP will be saved)');
+    process.exit();
+}
+
+function start()
+{
+    var client = dgram.createSocket("udp4");
+    client.bind(nconf.get('proxyPort'));
+    client.on("message", function(msg, rinfo)
+    {
+        packetReceive(msg, rinfo);
+    });
+
+}
 
 function packetLog(srcip, srcPort, destip, destPort, type)
 {
@@ -12,15 +46,10 @@ function packetLog(srcip, srcPort, destip, destPort, type)
     filter = Array();
     if (filter.indexOf(type) !== -1 || filter.indexOf("all") !== -1)
     {
-        console.log("received: 0x" + type + " from " + srcip + ":" + srcPort + ", sending : 0x" + 
-            type + " to " + destip + ":" + destPort);
+        console.log("received: 0x" + type + " from " + srcip + ":" + srcPort + ", sending : 0x" 
+            + type + " to " + destip + ":" + destPort);
     }
 }
-
-client.on("message", function(msg, rinfo)
-{
-    packetReceive(msg, rinfo);
-});
 
 function packetReceive(msg, rinfo, sendPort)
 {
@@ -71,3 +100,18 @@ function packetReceive(msg, rinfo, sendPort)
         }
     }
 }
+
+process.on( 'SIGINT', function() {
+    console.log("Shutting down proxy.")
+    nconf.save(function (err) {
+        fs.readFile(configPath, function (err, data) {
+            if (err !== null)
+            {
+                console.log("Error saving file: " + err);
+            }
+            process.exit();
+        });
+    });
+});
+
+start();
