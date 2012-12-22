@@ -2,3 +2,6 @@
 config.json
 node_modules
 npm-debug.log
+.git
+test
+web
