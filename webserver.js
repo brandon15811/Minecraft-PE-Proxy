@@ -11,7 +11,7 @@ app.listen(8001);
 
 function handler (req, res)
 {
-  fs.readFile(path.join(__dirname, 'layouts/config.ejs'),node
+  fs.readFile(path.join(__dirname, 'layouts/index.ejs'),
   function (err, data)
   {
     if (err) 
