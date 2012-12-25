@@ -9,7 +9,7 @@ Before first use
 ----------------
 Install dependencies
 ```
-npm install -d
+npm install
 ```
 Running the proxy
 -----------------
