@@ -3,7 +3,7 @@ var path = require('path');
 var fs = require('fs');
 var utils = require('./utils');
 var nconf = utils.config.nconf;
-var webserver = require('./webserver');
+var packet = require('./packet').packet;
 var ipArray = { };
 var client = dgram.createSocket("udp4");;
 var configPath = path.join(__dirname, 'config.json');
@@ -17,32 +17,34 @@ if (!fs.existsSync(configPath))
 nconf.argv().env().file({ file: configPath });
 nconf.defaults({
     'serverPort': 19132,
-    'proxyPort': 19133
+    'proxyPort': 19133,
+    'interface': {
+        'cli': true,
+        'webserver': true
+    }
 });
 
 var serverip = nconf.get('serverip');
 var serverPort = nconf.get('serverPort');
 
+//Proxy settings
 nconf.set('serverip', serverip);
 nconf.set('serverPort', parseInt(serverPort));
 nconf.set('proxyPort', parseInt(nconf.get('proxyPort')));
+//Interface settings
+nconf.set('interface:webserver', utils.misc.toBoolean(nconf.get('interface:webserver')));
+nconf.set('interface:cli', utils.misc.toBoolean(nconf.get('interface:cli')));
+//Developer Mode
+nconf.set('dev', utils.misc.toBoolean(nconf.get('dev')));
 
-var interfaceType = "web";
+nconf.save();
 
-utils.logging.on('info', function(msg)
-{
-    console.info('[INFO]: ' + msg);
-});
-
-utils.logging.on('error', function(msg)
+utils.logging.on('logerror', function(msg)
 {
     console.error('[ERROR]: ' + msg);
 });
 
-utils.logging.on('debug', function(msg)
-{
-    console.log('[DEBUG]: ' + msg);
-});
+proxyConfigCheck();
 
 utils.config.on('serverChange', function(msg)
 {
@@ -59,14 +61,6 @@ utils.config.on('serverChange', function(msg)
     }
 });
 
-
-if (typeof(serverip) === 'undefined')
-{
-    utils.logging.error('No server ip set. Set one with --serverip <server ip> (only needed on'
-        + ' first launch or when changing ips)');
-    process.exit(1);
-}
-
 function startProxy()
 {
     client.bind(nconf.get('proxyPort'));
@@ -75,7 +69,37 @@ function startProxy()
     {
         packetReceive(msg, rinfo);
     });
+    if (nconf.get("interface:cli") === true)
+    {
+        var cli = require('./cli').cli;
+        cli.start();
+    }
+    if (nconf.get("interface:webserver") === true)
+    {
+        var webserver = require('./webserver').webserver;
+        webserver.start();
+    }
+}
 
+function proxyConfigCheck()
+{
+    if (typeof(serverip) === 'undefined')
+    {
+        utils.logging.logerror('No server ip set. Set one with --serverip <server ip> (only'
+        + ' needed on first launch or when changing ips)');
+        process.exit(1);
+    }
+    if (!utils.misc.isNumber(nconf.get('serverPort')))
+    {
+        utils.logging.logerror('Port specified for --serverPort is not a number')
+        process.exit(1);
+    }
+    
+    if (!utils.misc.isNumber(nconf.get('proxyPort')))
+    {
+        utils.logging.logerror('Port specified for --proxyPort is not a number')
+        process.exit(1);
+    }
 }
 
 function packetReceive(msg, rinfo, sendPort)
@@ -101,7 +125,7 @@ function packetReceive(msg, rinfo, sendPort)
     }
     if (rinfo.address !== serverip)
     {
-        utils.decode.packetLog(rinfo.address, rinfo.port, serverip, serverPort, msg);
+        packet.log(rinfo.address, rinfo.port, serverip, serverPort, msg);
         ipArray[rinfo.port].socket.send(msg, 0, msg.length, serverPort,
             serverip);
     }
@@ -118,7 +142,7 @@ function packetReceive(msg, rinfo, sendPort)
         }
         else
         {
-            utils.decode.packetLog(rinfo.address, rinfo.port, ipArray[sendPort]['ip'],
+            packet.log(rinfo.address, rinfo.port, ipArray[sendPort]['ip'],
                 ipArray[sendPort]['port'], msg);
             //utils.logging.debug("Minecraft port for " + ipArray[sendPort]['ip'] + ": " +
             //    ipArray[sendPort]['port']);
@@ -129,13 +153,13 @@ function packetReceive(msg, rinfo, sendPort)
 
 process.on('SIGINT', function() 
 {
-    utils.logging.info("Shutting down proxy.");
+    console.info("Shutting down proxy.");
     nconf.save(function (err) 
     {
         fs.readFile(configPath, function (err, data) {
             if (err !== null)
             {
-                utils.logging.error("Error saving file: " + err);
+                utils.logging.logerror("Error saving file: " + err);
             }
             process.exit();
         });

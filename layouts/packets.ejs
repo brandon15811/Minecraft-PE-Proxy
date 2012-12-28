@@ -1,0 +1,149 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <title>Packets</title>
+  <link rel="stylesheet" href="http://mleibman.github.com/SlickGrid/examples/../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="http://mleibman.github.com/SlickGrid/examples/../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="http://mleibman.github.com/SlickGrid/examples/examples.css" type="text/css"/>
+  <link rel="stylesheet" href="http://mleibman.github.com/SlickGrid/examples/../controls/slick.columnpicker.css" type="text/css"/>
+  <style>
+    /*.cell-title {
+      font-weight: bold;
+    }
+
+    .cell-effort-driven {
+      text-align: center;
+    }
+
+    .cell-selection {
+      border-right-color: silver;
+      border-right-style: none;
+      background: #f5f5f5;
+      color: gray;
+      text-align: right;
+      font-size: 10px;
+    }
+
+    .slick-row.selected .cell-selection {
+      background-color: transparent; /* show default selected row background /
+      border: none
+    }*/
+  </style>
+</head>
+<body>
+<% include bodyheader.ejs %>
+<div style="position:relative">
+  <div style="width:600px;">
+    <div id="myGrid" style="width:100%;height:500px;"></div>
+  </div>
+</div>
+<div id="packetInfo" style="font-size:20px"></div>
+
+<script src="http://mleibman.github.com/SlickGrid/examples/../lib/jquery-1.7.min.js"></script>
+<script src="http://mleibman.github.com/SlickGrid/examples/../lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="http://mleibman.github.com/SlickGrid/examples/../lib/jquery.event.drag-2.0.min.js"></script>
+
+<script src="http://mleibman.github.com/SlickGrid/examples/../slick.core.js"></script>
+<script src="http://mleibman.github.com/SlickGrid/examples/../slick.formatters.js"></script>
+<script src="http://mleibman.github.com/SlickGrid/examples/../plugins/slick.rowselectionmodel.js"></script>
+<script src="http://mleibman.github.com/SlickGrid/examples/../slick.grid.js"></script>
+<script src="http://mleibman.github.com/SlickGrid/examples/../slick.dataview.js"></script>
+<script src="http://mleibman.github.com/SlickGrid/examples/../controls/slick.columnpicker.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+var dataView;
+var grid;
+var data = [];
+    columns = [
+        {
+            id: "time",
+            name: "Time",
+            field: "time"
+        },
+        {
+            id: "srcip",
+            name: "Source",
+            field: "srcip"
+        },
+        {
+            id: "destip",
+            name: "Destination",
+            field: "destip"
+        },
+        {
+            id: "length",
+            name: "Length",
+            field: "length", 
+            width: 45
+        },
+        {
+            id: "info",
+            name: "Info",
+            field: "info",
+            width: 400
+        }
+    ];
+  var options = {
+    enableAddRow: true,
+    enableCellNavigation: true,
+  };
+
+  $(function () {
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+    grid.setSelectionModel(new Slick.RowSelectionModel());
+  })
+  
+  
+      var socket = io.connect('http://' + window.location.hostname);
+    socket.on('connect', function () {
+        console.log('Connected');
+        grid.onSelectedRowsChanged.subscribe(function(e, a) 
+        {
+            console.log(data[grid.getSelectedRows()].realTime);
+            socket.emit('getPacketData', data[grid.getSelectedRows()].realTime);
+        });
+    });
+
+    socket.on('log', function (data) 
+    {
+        document.body.innerHTML += data + "<br>";
+        console.log(data);
+    });
+    
+    socket.on('packetData', function (data) 
+    {
+        json = JSON.parse(data);
+        function tree(data) {    
+            if (typeof(data) == 'object') {        
+                var ul = $('<div>');
+                for (var i in data) {            
+                    ul.append($('<div style="padding: 20px">').text(i).
+                        append(tree(data[i])));         
+                }        
+                return ul;
+            } else {       
+                var textNode = document.createTextNode(': ' + data);
+                return textNode;
+            }
+        }
+
+        $("#packetInfo").html(tree(json));
+        
+    });
+        
+    socket.on('packetReceive', function (json)
+    {
+      grid.invalidateRow(data.length); 
+      data.push(JSON.parse(json));
+    });
+    setInterval(function ()
+        {       
+            grid.updateRowCount();
+            grid.render();
+            //grid.scrollRowIntoView(data.length + 1)
+        }, 10);
+</script>
+</body>
+</html>

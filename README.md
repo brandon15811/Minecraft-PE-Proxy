@@ -5,7 +5,14 @@ Proxy for Minecraft Pocket Edition to connect to internet servers without app mo
 
 Usage
 =====
-
+Before first use
+----------------
+Install dependencies
+```
+npm install
+```
+Running the proxy
+-----------------
 ```
 node mcpeproxy.js --serverip <server ip>
 ```

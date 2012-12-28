@@ -1,32 +1,79 @@
 var app = require('http').createServer(handler);
-var io = require('socket.io').listen(app);
+var io = require('socket.io')
 var querystring = require('querystring');
 var ejs = require('ejs');
 var fs = require('fs');
 var path = require('path');
+var node_static = require('node-static');
 var utils = require('./utils');
-nconf = utils.config.nconf;
+var packet = require('./packet').packet;
+var nconf = utils.config.nconf;
+var webserver = this;
+var client = {};
 
-app.listen(8001);
+webserver.start = function()
+{
+    app.listen(8001);
+    socketServer = io.listen(app);
+    socketServer.set('log level', 2)
+    socketServer.sockets.on('connection', function(socket)
+    { 
+        socketRoute(socket)
+    }); 
+}
 
 function handler (req, res)
 {
-  fs.readFile(path.join(__dirname, 'layouts/index.ejs'),
-  function (err, data)
-  {
-    if (err) 
+    if (req.url.substr(0, 7) === '/static')
     {
-      res.writeHead(500);
-      return res.end('Error loading config.');
+        var file = new node_static.Server('./static');
+        file.serve(req, res, function(err, result)
+        {
+            res.writeHead(404);
+            return res.end('File not found');    
+        });
     }
+    else
+    {
+        var route = Array('/config', '/');
+        if (nconf.get('dev'))
+        {
+            route.push('/packets');
+        }
+        if (route.indexOf(req.url) !== -1)
+        {
+            if (req.url === '/')
+            {
+                req.url = '/config';
+            }
+            fs.readFile(path.join(__dirname, 'layouts/', req.url + '.ejs'),
+            function (err, data)
+            {
+                if (err) 
+                {
+                    res.writeHead(500);
+                    return res.end('Error loading file');
+                }
 
-    res.writeHead(200);
-    res.end(ejs.render(data.toString('ascii')));
-  });
+                res.writeHead(200);
+                res.end(ejs.render(data.toString('ascii'), 
+                {
+                        filename: path.join(__dirname, 'layouts/', req.url + '.ejs'),
+                        locals: 
+                        {
+                            nconf: nconf
+                        }
+                }));
+            });
+        }
+        else {
+            res.writeHead(404);
+            return res.end('File not found');
+        }
+    }
 }
 
-io.set('log level', 2);
-io.sockets.on('connection', function (socket)
+function socketRoute(socket)
 {
 
     utils.logging.on('info', function(msg)
@@ -34,7 +81,7 @@ io.sockets.on('connection', function (socket)
         socket.emit('log', '[INFO]: ' + msg );
     });
 
-    utils.logging.on('error', function(msg)
+    utils.logging.on('logerror', function(msg)
     {
         socket.emit('log', '[ERROR]: ' + msg );
     });
@@ -43,14 +90,36 @@ io.sockets.on('connection', function (socket)
     {
         socket.emit('log', '[DEBUG]: ' + msg );
     });
-    
+
     socket.on('config', function(msg)
     {
         utils.config.change('serverChange', querystring.parse(msg));
     });
-});
 
+    if (nconf.get('dev'))
+    {
+        socket.packet[socket.id] = function(srcip, srcPort, destip, destPort, msg, info, type,
+        startTime)
+        {
+            hex = msg.toString('hex');
+            var json = JSON.stringify({'srcip': srcip, 'destip': destip, 'length': hex.length,
+                'info': info + ": 0x" + type, 'realTime': realTime,
+                'time': sinceStartTime[0] + "." + sinceStartTime[1]});
+           socket.emit("packetReceive", json);
+        }
 
+        packet.on('receive', socket.packet[socket.id]);
 
+        socket.on('getPacketData', function(msg)
+        {
+            socket.emit('packetData', JSON.stringify(packet.decode(msg)));
+        });
+        
+        socket.on('disconnect', function () {
+            packet.removeListener('receive', socket.packet[socket.id]);
+        });
 
+    }
+}
 
+exports.webserver = webserver;

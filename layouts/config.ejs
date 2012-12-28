@@ -1,19 +1,36 @@
+<% include bodyheader.ejs %>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+    function isNumber(n)
+    {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
     var socket = io.connect('http://' + window.location.hostname);
     socket.on('connect', function () {
-        $("form").submit(function(event) {
+        $("#config").submit(function(event) {
             event.preventDefault();
+            if (!isNumber($('#serverPort').val()))
+            {
+                alert('Port used for server port is not a number');
+                return false;
+
+            }
+            if (!isNumber($('#proxyPort').val()))
+            {
+                alert('Port used for proxy port is not a number');
+                return false;
+            }
+            console.log("emit");
             socket.emit('config', $("#config").serialize());
         });
     });
     
 </script>
 <form id="config">
-    Server ip: <input type='text' name='serverip' value="<%= nconf.get('serverip') %>" /><br/>
-    Server port: <input type='text' name='serverPort' value="<%= nconf.get('serverPort') %>" /><br/>
-    Proxy port: <input type='text' name='proxyPort' value="<%= nconf.get('proxyPort') %>" /><br/>
+    Server ip: <input type='text' name='serverip' id='serverip' value="<%= nconf.get('serverip') %>" /><br/>
+    Server port: <input type='text' name='serverPort' id='serverPort' value="<%= nconf.get('serverPort') %>" /><br/>
+    Proxy port: <input type='text' name='proxyPort' id='proxyPort' value="<%= nconf.get('proxyPort') %>" /><br/>
     <input type="submit" value="submit" /><br/>
 </form>
 
