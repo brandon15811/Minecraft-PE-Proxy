@@ -15,16 +15,17 @@
             event.preventDefault();
             if (!isNumber($('#serverPort').val()))
             {
-                alert('Port used for server port is not a number');
+                $('#form-error').text('Port used for server port is not a number');
                 return false;
 
             }
             if (!isNumber($('#proxyPort').val()))
             {
-                alert('Port used for proxy port is not a number');
+                $('#form-error').text('Port used for proxy port is not a number');
                 return false;
             }
             socket.emit('config', $("#config").serialize());
+            $('#form-error').text("");
         });
     });
 
@@ -36,6 +37,7 @@
 
 </script>
 <form id="config">
+    <div id='form-error'></div>
     Server ip: <input type='text' name='serverip' id='serverip' disabled='true' value="<%= nconf.get('serverip') %>" /><br/>
     Server port: <input type='text' name='serverPort' id='serverPort' disabled='true' value="<%= nconf.get('serverPort') %>" /><br/>
     Proxy port: <input type='text' name='proxyPort' id='proxyPort' disabled='true' value="<%= nconf.get('proxyPort') %>" /><br/>
