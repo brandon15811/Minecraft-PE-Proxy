@@ -3,6 +3,7 @@ var logging = new EventEmitter();
 var config = new EventEmitter();
 var misc = this;
 config.nconf = require('nconf');
+logging.setMaxListeners(50);
 
 logging.packet = function (msg)
 {

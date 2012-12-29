@@ -7,6 +7,7 @@ var packetName = require('./pstructs/packetName').packetName;
 var packet = new EventEmitter();
 var startTime = process.hrtime();
 packet.store = {};
+packet.setMaxListeners(50);
 
 packet.log = function (srcip, srcPort, destip, destPort, msg)
 {
