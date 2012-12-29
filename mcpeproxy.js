@@ -156,13 +156,11 @@ process.on('SIGINT', function()
     console.info("Shutting down proxy.");
     nconf.save(function (err) 
     {
-        fs.readFile(configPath, function (err, data) {
-            if (err !== null)
-            {
-                utils.logging.logerror("Error saving file: " + err);
-            }
-            process.exit();
-        });
+        if (err)
+        {
+            utils.logging.logerror("Error saving config: " + err);
+        }
+        process.exit();
     });
 });
 
