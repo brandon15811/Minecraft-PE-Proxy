@@ -21,7 +21,6 @@
                 alert('Port used for proxy port is not a number');
                 return false;
             }
-            console.log("emit");
             socket.emit('config', $("#config").serialize());
         });
     });
