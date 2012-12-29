@@ -36,6 +36,7 @@
 <div style="position:relative">
     <div id="myGrid" style="width:100%;height:500px;"></div>
 </div>
+<div>Autoscrolling: <a href='#' id='autoscroll-status' >Disabled (click to enable)</a></div>
 <div id="packetInfo"></div>
 
 <script src="/static/js/lib/jquery-1.7.min.js"></script>
@@ -54,6 +55,7 @@
 var dataView;
 var grid;
 var data = [];
+var autoscroll = false;
     columns = [
         {
             id: "time",
@@ -113,13 +115,11 @@ var data = [];
     {
         json = JSON.parse(data);
         function json2html(data, level, indent) {
-            console.log("Level: " + level + ", " + indent) 
             if (typeof(data) == 'object') {        
                 var div = $('<div>');
                 for (var i in data) {            
                     div.append($('<div>').text(i).
                         append(json2html(data[i], level + 1, indent)).css('padding-left', (indent * level) + "px"));
-                        console.log((indent * level))
                 }        
                 return div;
             } else {       
@@ -137,11 +137,28 @@ var data = [];
       grid.invalidateRow(data.length); 
       data.push(JSON.parse(json));
     });
+    $('#autoscroll-status').click(function(e)
+    {
+        e.preventDefault();
+        if (autoscroll)
+        {
+            autoscroll = false;
+            $('#autoscroll-status').text("Disabled (click to enable)");
+        }
+        else
+        {
+            autoscroll = true;
+            $('#autoscroll-status').text("Enabled (click to disable)");
+        }
+    });
     setInterval(function ()
         {       
             grid.updateRowCount();
             grid.render();
-            //grid.scrollRowIntoView(data.length + 1)
+            if (autoscroll)
+            {
+                grid.scrollRowIntoView(data.length + 1)
+            }
         }, 10);
 </script>
 </body>
