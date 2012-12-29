@@ -26,7 +26,8 @@ function handler (req, res)
 {
     if (req.url.substr(0, 7) === '/static')
     {
-        var file = new node_static.Server('./static');
+        req.url = req.url.substr(8);
+        var file = new node_static.Server('static/');
         file.serve(req, res, function(err, result)
         {
             res.writeHead(404);

@@ -1,6 +1,6 @@
 {
   "name": "minecraft-pe-proxy",
-  "version": "0.0.1-4f912ca",
+  "version": "0.0.1",
   "description": "Proxy for Minecraft Pocket Edition to connect to internet servers without app modification",
   "homepage": "https://github.com/brandon15811/Minecraft-PE-Proxy",
   "main": "mcpeproxy.js",
