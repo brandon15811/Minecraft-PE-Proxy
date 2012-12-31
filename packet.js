@@ -6,6 +6,15 @@ var dataName = require('./pstructs/5').protocol;
 var packetName = require('./pstructs/packetName').packetName;
 var packet = new EventEmitter();
 var startTime = process.hrtime();
+try
+{
+    require('console-trace')({
+        always: true,
+        cwd: __dirname
+    })
+}
+catch(err)
+{}
 packet.store = {};
 packet.setMaxListeners(50);
 
@@ -28,9 +37,12 @@ packet.log = function (srcip, srcPort, destip, destPort, msg)
     }
 }
 
-packet.decode = function (time)
+packet.decode = function (msg, time)
 {
-    msg = packet.store[time];
+    if (typeof(time) !== 'undefined')
+    {
+        msg = packet.store[time];
+    }
     var data = { };
     if(typeof(msg) === 'undefined')
     {
@@ -38,93 +50,258 @@ packet.decode = function (time)
              + " was captured?";
              return data;
     }
-    var type = msg.toString('hex').substr(0,2);
-    var hex = msg.toString('hex');
+    var type = new Buffer(msg.substr(0,1)).readUInt8(0);
+    var hex = msg;
     data['Data length'] =  msg.length;
-    data['Packet ID'] = "0x" + type;
+    data['Packet ID'] = "0x" + msg.substr(0,1).toString('hex');
+    
     switch (type)
     {
-        case "02":
-            data['Ping ID'] = hex.substr(2, 16);
-            data['Magic'] = hex.substr(18, 32);
+        case 0x02:
+            data['Ping ID'] = hex.substr(1, 8).toString('hex');
+            data['Magic'] = hex.substr(9, 16).toString('hex');
             break;
         
-        case "1c":
-            data['Ping ID'] = hex.substr(2, 16);
-            data['Server ID'] = hex.substr(18, 16);
-            data['Magic'] = hex.substr(34, 32);
-            data['Length'] = parseInt(hex.substr(66, 4), 16);
-            data['Identifier'] = Buffer(hex.substr(70, 22), 'hex').toString('ascii');
-            data['Server Name'] = Buffer(hex.substr(92), 'hex').toString('ascii');
+        case 0x1c:
+            data['Ping ID'] = hex.substr(1, 8).toString('hex');
+            data['Server ID'] = hex.substr(9, 8).toString('hex');
+            data['Magic'] = hex.substr(17, 16).toString('hex');
+            data['Length'] = hex.substr(33, 2).readUInt16BE(0);
+            data['Identifier'] = hex.substr(35, 11).toString('ascii');
+            data['Server Name'] = hex.substr(46).toString('ascii');
             break;
         
-        case "05":
-            data['Magic'] = hex.substr(2, 32);
-            data['Protocol version'] = hex.substr(34, 2);
+        case 0x05:
+            data['Magic'] = hex.substr(1, 16).toString('hex')
+            data['Protocol version'] = hex.substr(17, 1).toString('hex')
             data['Null Payload'] = "";
             break;
         
-        case "06":
-            data['Magic'] = hex.substr(2, 32);
-            data['Server ID'] = hex.substr(34,16);
-            data['Server Security'] = hex.substr(50, 2);
-            data['MTU Size'] = parseInt(hex.substr(52), 16);
+        case 0x06:
+            data['Magic'] = hex.substr(1, 16).toString('hex')
+            data['Server ID'] = hex.substr(17, 8).toString('hex')
+            data['Server Security'] = hex.substr(25, 1).toString('hex')
+            data['MTU Size'] = hex.substr(26).readUInt16BE(0);
             break;
             
-        case "07":
-            data['Magic'] = hex.substr(2, 32);
-            data['Security + Cookie'] = hex.substr(34, 10);
-            data['Server Port'] = parseInt(hex.substr(44, 4), 16);
-            data['MTU Size'] = parseInt(hex.substr(48, 4), 16);
-            data['Client ID'] = hex.substr(52, 16);
+        case 0x07:
+            data['Magic'] = hex.substr(1, 16).toString('hex')
+            data['Security + Cookie'] = hex.substr(17, 5).toString('hex')
+            data['Server Port'] = hex.substr(22, 2).readUInt16BE(0);
+            data['MTU Size'] = hex.substr(24, 2).readUInt16BE(0);
+            data['Client ID'] = hex.substr(26, 8).toString('hex')
             break;
         
-        case "08":
-            data['Magic'] = hex.substr(2, 32);
-            data['Server ID'] = hex.substr(34, 16);
-            data['Client Port'] = parseInt(hex.substr(50, 4), 16);
-            data['MTU Size'] = parseInt(hex.substr(54, 4), 16);
-            data['Security'] = hex.substr(58, 2);
+        case 0x08:
+            data['Magic'] = hex.substr(1, 16).toString('hex')
+            data['Server ID'] = hex.substr(17, 8).toString('hex')
+            data['Client Port'] = hex.substr(25, 2).readUInt16BE(0);
+            data['MTU Size'] = hex.substr(27, 2).readUInt16BE(0);
+            data['Security'] = hex.substr(29, 1).toString('hex')
             break;
         
-        case "a0":
-            data['Unknown'] = hex.substr(2, 4);
-            data['Additional Packet'] = hex.substr(6, 2);
-            if (parseInt(hex.substr(6, 2), 16) == 0x01)
+        case 0xa0:
+            data['Unknown'] = hex.substr(1, 2).toString('hex')
+            data['Additional Packet'] = hex.substr(3, 1).toString('hex')
+            if (hex.substr(3, 1).readUInt8(0) == 0x01)
             {
-                data['Packet Number'] = new Buffer(hex.substr(8), 'hex').readUInt16LE(0);
+                data['Packet Number'] = hex.substr(4).readUInt16LE(0);
             }
             else
             {
                 //TODO: Append to Info column
                 data['Multiple nacks'] = {};
-                data['Multiple nacks']['First Packet number'] = new Buffer(hex.substr(8, 6),
-                    'hex').readUInt16LE(0);
-                data['Multiple nacks']['Second Packet Number'] = new Buffer(hex.substr(14, 6),
-                    'hex').readUInt16LE(0);
+                data['Multiple nacks']['First Packet number'] = hex.substr(4, 3).readUInt16LE(0);
+                data['Multiple nacks']['Second Packet Number'] = hex.substr(7, 3).readUInt16LE(0);
             }
             break;
             
-        case "c0":
-            data['Unknown'] = hex.substr(2, 4);
-            data['Additional Packet'] = hex.substr(6, 2);
-            if (parseInt(hex.substr(6, 2), 16) == 0x01)
+        case 0xc0:
+            data['Unknown'] = hex.substr(1, 2).toString('hex')
+            data['Additional Packet'] = hex.substr(3, 1).toString('hex')
+            if (hex.substr(3, 1).readUInt8(0) == 0x01)
             {
-                data['Packet Number'] = new Buffer(hex.substr(8), 'hex').readUInt16LE(0);
+                data['Packet Number'] = hex.substr(4).readUInt16LE(0);
             }
             else
             {
                 //TODO: Append to Info column
                 data['Multiple acks'] = {};
-                data['Multiple acks']['First Packet number'] = new Buffer(hex.substr(8, 6),
-                    'hex').readUInt16LE(0);
-                data['Multiple acks']['Second Packet Number'] = new Buffer(hex.substr(14, 6),
-                    'hex').readUInt16LE(0);
+                data['Multiple acks']['First Packet number'] = hex.substr(4, 3).readUInt16LE(0);
+                data['Multiple acks']['Second Packet Number'] = hex.substr(7, 3).readUInt16LE(0);
             }
             break;
+
+        case checkData(type):
+            data['Packet Number'] = new Buffer(hex.substr(1, 3), 'hex').readUInt16LE(0);
+            var subData = hex.substr(4);
+            var length = (subData.length) / 8;
+            packet.packetLength = 0;
+            var i = 0;
+            var total = 0;
+            data['Packet ' + total] = {};
+            dataTotal = data['Packet ' + total];
             
+            while (i < length)
+            {
+                iS = i
+                idp = subData.substr(i, 1).readUInt8(0);
+                i = i + 1
+                try
+                {
+                    packet.packetLength = subData.substr(i, 2).readUInt16BE(0) / 8;
+                }
+                catch(err)
+                {
+                    data['Error'] = "Data packet decoding failed: " + err + " Maybe this packet"
+                    + "isn't implemented yet?"
+                    i = length;
+                    continue;
+                }
+                i = i + 2
+                
+                if (idp === 0x00)
+                {
+                }
+                else if (idp === 0x40)
+                {
+                    i = i + 3
+                }
+                else if (idp === 0x60)
+                {
+                    i = i + 14
+                }
+                iX = i
+                switch(subData.substr(i, 1).readUInt8(0))
+                {
+                    case 0x82:
+                        dataTotal['LoginPacket'] = {};
+                        part = dataTotal['LoginPacket']
+                        i = dataStart(part, subData, iS, idp);
+                        
+                        i = getString(part, subData, i, "Name");
+                        console.log(data);
+                        i = getInt(part, subData, i, "Int 1");
+                        i = getInt(part, subData, i, "Int 2")
+                        break;
+                        
+                    case 0x83:
+                        dataTotal['LoginStatusPacket'] = {};
+                        part = dataTotal['LoginStatusPacket'];
+                        i = dataStart(part, subData, iS, idp);
+                        
+                        i = getInt(part, subData, i, "Int 1");
+                        break;
+                    default:
+                        data['Error'] = "Data packet type not implemented yet."
+                        i = length;
+                    
+                }
+            i = iX + packetLength;
+            total = total + 1;
+            }
+            break;
     }
-    //data['hexdump'] = "<pre>" + hexy.hexy(msg) + "</pre>";
     return data;
+}
+
+function getString(part, subData, i, name)
+{
+    var slength = subData.substr(i, 2).readUInt16BE(0);
+    part['Length'] = slength;
+    part[name] = subData.substr(i + 2, slength).toString('ascii');
+    i = i + slength + 2
+    console.log(subData.substr(i))
+    return i;
+}
+
+function dataStart(part, subData, i, idp)
+{
+    part['Container'] = subData.substr(i, 1).toString('hex');
+    part['Data Length'] = packet.packetLength;
+    if (subData.substr(i, 1).readUInt8(0) === 0x00)
+    {
+        i = i + 3
+    }
+    else if (subData.substr(i, 1).readUInt8(0) === 0x40)
+    {
+        part['Packet Counter'] = subData.substr(i + 3, 3).readUInt16LE(0);
+        i= i + 6
+    }
+    else if (subData.substr(i, 1).readUInt8(0) === 0x60)
+    {
+        part['Packet Counter'] = subData.substr((i) + 3, 3).readUInt16LE(0);
+        part['Unknown'] = subData.substr(i + 6, 4).readUInt16LE(0);
+        i = i + 10
+    }
+    part['MCPE ID'] = subData.substr(i, 1).toString('hex');
+    return i + 1;
+}
+
+function getMobName(part, subData, i)
+{
+    //FIXME
+    var a = parseInt(subData.substr(i * 2, 8), 16);
+    var name = "Unknown name";
+    switch (a)
+    {
+        case 0x20:
+            name = "Zombie";
+            break;
+        
+        case 0x21:
+            name = "Creeper";
+            break;
+            
+        case 0x22:
+            name = "Skeleton";
+            break;
+            
+        case 0x23:
+            name = "Spider";
+            break;
+            
+        case 0x24:
+            name = "Zombie Pigman";
+            break;
+    }
+    
+    part['Mob Type'] = name;
+    return i + 8;
+}
+
+function getByte(part, subData, i, name)
+{
+    part[name] = subData.substr(i, 1);
+    return i + 1;
+}
+
+function getInt(part, subData, i, name)
+{
+    //console.log(subData.substr(i, 4))
+    part[name] = subData.substr(i, 4).readUInt32BE(0);
+    return i + 4;
+}
+
+function checkData(type)
+{
+    if (type >= 0x80 && type <= 0x8f)
+    {
+        return type;
+    }
+    return false;
+}
+
+Buffer.prototype.substr = function (start, length)
+{
+    buffer = this;
+    if (typeof(length) === 'undefined')
+    {
+        return new Buffer(Array.prototype.slice.call(buffer, start));
+    }
+    else
+    {
+        return new Buffer(Array.prototype.slice.call(buffer, start, start + length));
+    }
 }
 exports.packet = packet;
