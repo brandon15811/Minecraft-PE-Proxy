@@ -131,15 +131,15 @@ var autoscroll = false;
         $("#packetInfo").html(json2html(json, 0, 10));
         
     });
-        
+
     socket.on('packetReceive', function (json)
     {
-      grid.invalidateRow(data.length); 
-      data.push(JSON.parse(json));
+        grid.invalidateRow(data.length);
+        data.push(JSON.parse(json));
     });
-    $('#autoscroll-status').click(function(e)
+    
+    function triggerAutoscroll()
     {
-        e.preventDefault();
         if (autoscroll)
         {
             autoscroll = false;
@@ -150,7 +150,14 @@ var autoscroll = false;
             autoscroll = true;
             $('#autoscroll-status').text("Enabled (click to disable)");
         }
+    }
+    
+    $('#autoscroll-status').click(function(e)
+    {
+        e.preventDefault();
+        triggerAutoscroll();
     });
+
     setInterval(function ()
         {       
             grid.updateRowCount();

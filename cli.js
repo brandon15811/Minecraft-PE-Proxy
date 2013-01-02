@@ -16,6 +16,7 @@ cli.start = function()
 
     packet.on('receive', function(srcip, srcPort, destip, destPort, msg)
     {
+        type = msg.toString('hex').substr(0,2);
         console.log("[PACKET]: received: 0x" + type + " from " + srcip + ":" + srcPort + 
             ", sending : 0x" + type + " to " + destip + ":" + destPort);
     });

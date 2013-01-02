@@ -4,8 +4,10 @@ var nconf = utils.config.nconf;
 var EventEmitter = require('events').EventEmitter;
 var dataName = require('./pstructs/5').protocol;
 var packetName = require('./pstructs/packetName').packetName;
+var sqlite3 = require('sqlite3');
 var packet = new EventEmitter();
 var startTime = process.hrtime();
+var packetInfo;
 try
 {
     require('console-trace')({
@@ -15,7 +17,10 @@ try
 }
 catch(err)
 {}
-packet.store = {};
+
+var db = new sqlite3.Database('packets.db');
+var stmt = db.prepare("INSERT INTO packets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
 packet.setMaxListeners(50);
 
 packet.log = function (srcip, srcPort, destip, destPort, msg)
@@ -29,25 +34,36 @@ packet.log = function (srcip, srcPort, destip, destPort, msg)
         {
             realTime = process.hrtime();
             sinceStartTime = process.hrtime(startTime);
-            packet.store[realTime] = msg;
-            packet.setMaxListeners(30)
+            packet.store(srcip, srcPort, destip, destPort, msg,
+                packetName["0x" + type], type, realTime, sinceStartTime);
             packet.emit('receive', srcip, srcPort, destip, destPort, msg,
                 packetName["0x" + type], type, realTime, sinceStartTime);
         }
     }
 }
 
-packet.decode = function (msg, time)
+packet.store = function (srcip, srcPort, destip, destPort, msg, packetName, type, realTime,
+    sinceStartTime)
 {
-    if (typeof(time) !== 'undefined')
-    {
-        msg = packet.store[time];
-    }
-    var data = { };
+    stmt.run(srcip, srcPort, destip, destPort, msg.toString('hex'), packetName, type,
+        realTime.join("."), sinceStartTime.join("."));
+}
+
+packet.get = function (time)
+{
+    db.get("SELECT * FROM packets WHERE realTime = ?", time, function(err, row) {
+        packetInfo = packet.decode(new Buffer(row['msg'], 'hex'));
+    });
+    console.log(packetInfo)
+    return packetInfo;
+}
+
+packet.decode = function (msg)
+{
+    var data = {};
     if(typeof(msg) === 'undefined')
     {
-        data['Error'] = "No data found for this packet. Has the server been restarted since it"
-             + " was captured?";
+        data['Error'] = "No data found for this packet. Maybe the database was cleared?";
              return data;
     }
     var type = new Buffer(msg.substr(0,1)).readUInt8(0);
@@ -155,8 +171,7 @@ packet.decode = function (msg, time)
                 {
                     data['Error'] = "Data packet decoding failed: " + err + " Maybe this packet"
                     + "isn't implemented yet?"
-                    i = length;
-                    continue;
+                    break;
                 }
                 i = i + 2
                 
@@ -197,7 +212,7 @@ packet.decode = function (msg, time)
                         i = length;
                     
                 }
-            i = iX + packetLength;
+            i = iX + packet.packetLength;
             total = total + 1;
             }
             break;
@@ -278,7 +293,6 @@ function getByte(part, subData, i, name)
 
 function getInt(part, subData, i, name)
 {
-    //console.log(subData.substr(i, 4))
     part[name] = subData.substr(i, 4).readUInt32BE(0);
     return i + 4;
 }

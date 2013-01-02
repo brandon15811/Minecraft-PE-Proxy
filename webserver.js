@@ -104,16 +104,16 @@ function socketRoute(socket)
         {
             hex = msg.toString('hex');
             var json = JSON.stringify({'srcip': srcip, 'destip': destip, 'length': hex.length,
-                'info': info + ": 0x" + type, 'realTime': realTime,
-                'time': sinceStartTime[0] + "." + sinceStartTime[1]});
+                'info': info + ": 0x" + type, 'realTime': realTime.join("."),
+                'time': sinceStartTime.join(".")});
            socket.emit("packetReceive", json);
         }
 
         packet.on('receive', socket.packet[socket.id]);
 
-        socket.on('getPacketData', function(msg)
+        socket.on('getPacketData', function(time)
         {
-            socket.emit('packetData', JSON.stringify(packet.decode("", msg)));
+            socket.emit('packetData', JSON.stringify(packet.get(time)));
         });
         
         socket.on('disconnect', function () {

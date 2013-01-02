@@ -29,5 +29,7 @@
     "node-static": "0.6.x",
   },
   "engine": "node 0.8.x",
-  "devDependencies": {}
+  "devDependencies": {
+    "sqlite3": "2.1.x"
+  }
 }

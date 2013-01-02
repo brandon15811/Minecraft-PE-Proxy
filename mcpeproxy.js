@@ -144,8 +144,6 @@ function packetReceive(msg, rinfo, sendPort)
         {
             packet.log(rinfo.address, rinfo.port, ipArray[sendPort]['ip'],
                 ipArray[sendPort]['port'], msg);
-            //utils.logging.debug("Minecraft port for " + ipArray[sendPort]['ip'] + ": " +
-            //    ipArray[sendPort]['port']);
             client.send(msg, 0, msg.length, ipArray[sendPort]['port'], ipArray[sendPort]['ip']);
         }
     }
