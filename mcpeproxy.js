@@ -69,12 +69,12 @@ function startProxy()
     {
         packetReceive(msg, rinfo);
     });
-    if (nconf.get("interface:cli") === true)
+    if (nconf.get("interface:cli") == true)
     {
         var cli = require('./cli').cli;
         cli.start();
     }
-    if (nconf.get("interface:webserver") === true)
+    if (nconf.get("interface:webserver") == true)
     {
         var webserver = require('./webserver').webserver;
         webserver.start();

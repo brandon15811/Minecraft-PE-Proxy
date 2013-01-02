@@ -37,7 +37,7 @@ function handler (req, res)
     else
     {
         var route = Array('/config', '/');
-        if (nconf.get('dev'))
+        if (nconf.getBoolean('dev'))
         {
             route.push('/packets');
         }
@@ -69,7 +69,7 @@ function handler (req, res)
         }
         else {
             res.writeHead(404);
-            return res.end('File not found');
+            return res.end('Page not found');
         }
     }
 }
@@ -97,7 +97,7 @@ function socketRoute(socket)
         utils.config.change('serverChange', querystring.parse(msg));
     });
 
-    if (nconf.get('dev'))
+    if (nconf.getBoolean('dev'))
     {
         socket.packet[socket.id] = function(srcip, srcPort, destip, destPort, msg, info, type,
         startTime)

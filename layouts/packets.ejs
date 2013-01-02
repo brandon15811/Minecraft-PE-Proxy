@@ -86,7 +86,6 @@ var autoscroll = false;
         }
     ];
   var options = {
-    enableAddRow: true,
     enableCellNavigation: true,
     forceFitColumns: true
   };
@@ -114,6 +113,7 @@ var autoscroll = false;
     socket.on('packetData', function (data) 
     {
         json = JSON.parse(data);
+        console.log(json)
         function json2html(data, level, indent) {
             if (typeof(data) == 'object') {        
                 var div = $('<div>');
@@ -134,7 +134,6 @@ var autoscroll = false;
 
     socket.on('packetReceive', function (json)
     {
-        grid.invalidateRow(data.length);
         data.push(JSON.parse(json));
     });
     

@@ -47,6 +47,11 @@ misc.toBoolean = function (obj)
     return false;
 }
 
+config.nconf.getBoolean = function(key)
+{
+        misc.toBoolean(config.nconf.get(key))
+}
+
 exports.logging = logging;
 exports.config = config;
 exports.misc = misc;

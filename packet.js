@@ -7,7 +7,9 @@ var packetName = require('./pstructs/packetName').packetName;
 var sqlite3 = require('sqlite3');
 var packet = new EventEmitter();
 var startTime = process.hrtime();
-var packetInfo;
+var packetInfo = {};
+var stmt;
+
 try
 {
     require('console-trace')({
@@ -18,14 +20,26 @@ try
 catch(err)
 {}
 
-var db = new sqlite3.Database('packets.db');
-var stmt = db.prepare("INSERT INTO packets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
 packet.setMaxListeners(50);
+var db = new sqlite3.Database('packets.db');
+db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='packets'", function(err, row) {
+    db.serialize(function() {
+        if (typeof(row) === 'undefined')
+        {
+            db.run("CREATE TABLE packets (srcip TEXT, srcPort INTEGER, destip TEXT, destPort"
+                + "INTEGER, msg BLOB, packetName TEXT, type TEXT, realTime TEXT, "
+                + "sinceStartTime TEXT)");
+        }
+        stmt = db.prepare("INSERT INTO packets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    });
+    
+});
+
+
 
 packet.log = function (srcip, srcPort, destip, destPort, msg)
 {
-    if (nconf.get('dev'))
+    if (nconf.getBoolean('dev'))
     {
         type = msg.toString('hex').substr(0,2)
         //Only log these packets
@@ -52,9 +66,15 @@ packet.store = function (srcip, srcPort, destip, destPort, msg, packetName, type
 packet.get = function (time)
 {
     db.get("SELECT * FROM packets WHERE realTime = ?", time, function(err, row) {
-        packetInfo = packet.decode(new Buffer(row['msg'], 'hex'));
+        try
+        {
+            packetInfo = packet.decode(new Buffer(row['msg'], 'hex'));
+        }
+        catch (err)
+        {
+            packetInfo["Errorr"] = "Packet decoding failed. Try again.";
+        }
     });
-    console.log(packetInfo)
     return packetInfo;
 }
 
@@ -195,7 +215,6 @@ packet.decode = function (msg)
                         i = dataStart(part, subData, iS, idp);
                         
                         i = getString(part, subData, i, "Name");
-                        console.log(data);
                         i = getInt(part, subData, i, "Int 1");
                         i = getInt(part, subData, i, "Int 2")
                         break;
@@ -226,7 +245,6 @@ function getString(part, subData, i, name)
     part['Length'] = slength;
     part[name] = subData.substr(i + 2, slength).toString('ascii');
     i = i + slength + 2
-    console.log(subData.substr(i))
     return i;
 }
 
