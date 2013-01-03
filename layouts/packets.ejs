@@ -89,6 +89,7 @@ var autoscroll = false;
         }
     ];
   var options = {
+    enableAddRow: true,
     enableCellNavigation: true,
     forceFitColumns: true
   };
@@ -145,6 +146,7 @@ var autoscroll = false;
 
     socket.on('packetReceive', function (json)
     {
+        grid.invalidateRow(data.length);
         data.push(JSON.parse(json));
     });
 
