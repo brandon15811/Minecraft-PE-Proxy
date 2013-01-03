@@ -49,7 +49,7 @@ misc.toBoolean = function (obj)
 
 config.nconf.getBoolean = function(key)
 {
-        misc.toBoolean(config.nconf.get(key))
+    return misc.toBoolean(config.nconf.get(key))
 }
 
 exports.logging = logging;

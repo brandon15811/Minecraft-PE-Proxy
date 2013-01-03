@@ -21,7 +21,8 @@ nconf.defaults({
     'interface': {
         'cli': true,
         'webserver': true
-    }
+    },
+    'dev': false
 });
 
 var serverip = nconf.get('serverip');
