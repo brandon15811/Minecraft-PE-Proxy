@@ -95,7 +95,6 @@ function proxyConfigCheck()
         utils.logging.logerror('Port specified for --serverPort is not a number')
         process.exit(1);
     }
-    
     if (!utils.misc.isNumber(nconf.get('proxyPort')))
     {
         utils.logging.logerror('Port specified for --proxyPort is not a number')
@@ -150,10 +149,10 @@ function packetReceive(msg, rinfo, sendPort)
     }
 }
 
-process.on('SIGINT', function() 
+process.on('SIGINT', function()
 {
     console.info("Shutting down proxy.");
-    nconf.save(function (err) 
+    nconf.save(function (err)
     {
         if (err)
         {

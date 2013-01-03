@@ -17,9 +17,9 @@ webserver.start = function()
     socketServer = io.listen(app);
     socketServer.set('log level', 2)
     socketServer.sockets.on('connection', function(socket)
-    { 
+    {
         socketRoute(socket)
-    }); 
+    });
 }
 
 function handler (req, res)
@@ -31,7 +31,7 @@ function handler (req, res)
         file.serve(req, res, function(err, result)
         {
             res.writeHead(404);
-            return res.end('File not found');    
+            return res.end('File not found');
         });
     }
     else
@@ -50,17 +50,17 @@ function handler (req, res)
             fs.readFile(path.join(__dirname, 'layouts/', req.url + '.ejs'),
             function (err, data)
             {
-                if (err) 
+                if (err)
                 {
                     res.writeHead(500);
                     return res.end('Error loading file');
                 }
 
                 res.writeHead(200);
-                res.end(ejs.render(data.toString('ascii'), 
+                res.end(ejs.render(data.toString('ascii'),
                 {
                         filename: path.join(__dirname, 'layouts/', req.url + '.ejs'),
-                        locals: 
+                        locals:
                         {
                             nconf: nconf
                         }
@@ -115,12 +115,12 @@ function socketRoute(socket)
         {
             socket.emit('packetData', JSON.stringify(packet.get(time)));
         });
-        
+
         socket.on('databaseClear', function()
         {
             packet.clear();
         });
-        
+
         socket.on('disconnect', function () {
             packet.removeListener('receive', socket.packet[socket.id]);
         });

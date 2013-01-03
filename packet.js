@@ -32,7 +32,6 @@ db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='packets'", f
         }
         stmt = db.prepare("INSERT INTO packets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     });
-    
 });
 
 
@@ -95,14 +94,14 @@ packet.decode = function (msg)
     var hex = msg;
     data['Data length'] =  msg.length;
     data['Packet ID'] = "0x" + msg.substr(0,1).toString('hex');
-    
+
     switch (type)
     {
         case 0x02:
             data['Ping ID'] = hex.substr(1, 8).toString('hex');
             data['Magic'] = hex.substr(9, 16).toString('hex');
             break;
-        
+
         case 0x1c:
             data['Ping ID'] = hex.substr(1, 8).toString('hex');
             data['Server ID'] = hex.substr(9, 8).toString('hex');
@@ -111,20 +110,20 @@ packet.decode = function (msg)
             data['Identifier'] = hex.substr(35, 11).toString('ascii');
             data['Server Name'] = hex.substr(46).toString('ascii');
             break;
-        
+
         case 0x05:
             data['Magic'] = hex.substr(1, 16).toString('hex')
             data['Protocol version'] = hex.substr(17, 1).toString('hex')
             data['Null Payload'] = "";
             break;
-        
+
         case 0x06:
             data['Magic'] = hex.substr(1, 16).toString('hex')
             data['Server ID'] = hex.substr(17, 8).toString('hex')
             data['Server Security'] = hex.substr(25, 1).toString('hex')
             data['MTU Size'] = hex.substr(26).readUInt16BE(0);
             break;
-            
+
         case 0x07:
             data['Magic'] = hex.substr(1, 16).toString('hex')
             data['Security + Cookie'] = hex.substr(17, 5).toString('hex')
@@ -132,7 +131,7 @@ packet.decode = function (msg)
             data['MTU Size'] = hex.substr(24, 2).readUInt16BE(0);
             data['Client ID'] = hex.substr(26, 8).toString('hex')
             break;
-        
+
         case 0x08:
             data['Magic'] = hex.substr(1, 16).toString('hex')
             data['Server ID'] = hex.substr(17, 8).toString('hex')
@@ -140,7 +139,7 @@ packet.decode = function (msg)
             data['MTU Size'] = hex.substr(27, 2).readUInt16BE(0);
             data['Security'] = hex.substr(29, 1).toString('hex')
             break;
-        
+
         case 0xa0:
             data['Unknown'] = hex.substr(1, 2).toString('hex')
             data['Additional Packet'] = hex.substr(3, 1).toString('hex')
@@ -156,7 +155,7 @@ packet.decode = function (msg)
                 data['Multiple nacks']['Second Packet Number'] = hex.substr(7, 3).readUInt16LE(0);
             }
             break;
-            
+
         case 0xc0:
             data['Unknown'] = hex.substr(1, 2).toString('hex')
             data['Additional Packet'] = hex.substr(3, 1).toString('hex')
@@ -182,7 +181,7 @@ packet.decode = function (msg)
             var total = 0;
             data['Packet ' + total] = {};
             dataTotal = data['Packet ' + total];
-            
+
             while (i < length)
             {
                 iS = i
@@ -199,7 +198,7 @@ packet.decode = function (msg)
                     break;
                 }
                 i = i + 2
-                
+
                 if (idp === 0x00)
                 {
                 }
@@ -218,23 +217,23 @@ packet.decode = function (msg)
                         dataTotal['LoginPacket'] = {};
                         part = dataTotal['LoginPacket']
                         i = dataStart(part, subData, iS, idp);
-                        
+
                         i = getString(part, subData, i, "Name");
                         i = getInt(part, subData, i, "Int 1");
                         i = getInt(part, subData, i, "Int 2")
                         break;
-                        
+
                     case 0x83:
                         dataTotal['LoginStatusPacket'] = {};
                         part = dataTotal['LoginStatusPacket'];
                         i = dataStart(part, subData, iS, idp);
-                        
+
                         i = getInt(part, subData, i, "Int 1");
                         break;
                     default:
                         data['Error'] = "Data packet type not implemented yet."
                         i = length;
-                    
+
                 }
             i = iX + packet.packetLength;
             total = total + 1;
@@ -286,24 +285,24 @@ function getMobName(part, subData, i)
         case 0x20:
             name = "Zombie";
             break;
-        
+
         case 0x21:
             name = "Creeper";
             break;
-            
+
         case 0x22:
             name = "Skeleton";
             break;
-            
+
         case 0x23:
             name = "Spider";
             break;
-            
+
         case 0x24:
             name = "Zombie Pigman";
             break;
     }
-    
+
     part['Mob Type'] = name;
     return i + 8;
 }

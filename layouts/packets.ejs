@@ -78,7 +78,7 @@ var autoscroll = false;
         {
             id: "length",
             name: "Length",
-            field: "length", 
+            field: "length",
             width: 45
         },
         {
@@ -97,8 +97,7 @@ var autoscroll = false;
     grid = new Slick.Grid("#myGrid", data, columns, options);
     grid.setSelectionModel(new Slick.RowSelectionModel());
   })
-  
-  
+
     var socket = io.connect('http://' + window.location.hostname);
     socket.on('connect', function () {
         console.log('Connected');
@@ -106,7 +105,7 @@ var autoscroll = false;
         {
             socket.emit('getPacketData', data[grid.getSelectedRows()].realTime);
         });
-        
+
         $('#database-clear').click(function(e)
         {
             socket.emit('databaseClear');
@@ -121,34 +120,34 @@ var autoscroll = false;
     {
         document.body.innerHTML += data + "<br>";
     });*/
-    
-    socket.on('packetData', function (data) 
+
+    socket.on('packetData', function (data)
     {
         json = JSON.parse(data);
         console.log(json)
         function json2html(data, level, indent) {
-            if (typeof(data) == 'object') {        
+            if (typeof(data) == 'object') {
                 var div = $('<div>');
-                for (var i in data) {            
+                for (var i in data) {
                     div.append($('<div>').text(i).
                         append(json2html(data[i], level + 1, indent)).css('padding-left', (indent * level) + "px"));
-                }        
+                }
                 return div;
-            } else {       
+            } else {
                 var textNode = document.createTextNode(': ' + data);
                 return textNode;
             }
         }
 
         $("#packetInfo").html(json2html(json, 0, 10));
-        
+
     });
 
     socket.on('packetReceive', function (json)
     {
         data.push(JSON.parse(json));
     });
-    
+
     function triggerAutoscroll()
     {
         if (autoscroll)
@@ -162,7 +161,7 @@ var autoscroll = false;
             $('#autoscroll-status').text("Enabled (click to disable)");
         }
     }
-    
+
     $('#autoscroll-status').click(function(e)
     {
         e.preventDefault();
@@ -170,7 +169,7 @@ var autoscroll = false;
     });
 
     setInterval(function ()
-        {       
+        {
             grid.updateRowCount();
             grid.render();
             if (autoscroll)
