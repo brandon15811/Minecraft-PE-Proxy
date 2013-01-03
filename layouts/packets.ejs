@@ -36,7 +36,10 @@
 <div style="position:relative">
     <div id="myGrid" style="width:100%;height:500px;"></div>
 </div>
+<div id="config">
 <div>Autoscrolling: <a href='#' id='autoscroll-status' >Disabled (click to enable)</a></div>
+<div><a href='#' id='database-clear' >Click to clear all packets (from page and database) </a></div>
+</div>
 <div id="packetInfo"></div>
 
 <script src="/static/js/lib/jquery-1.7.min.js"></script>
@@ -96,12 +99,21 @@ var autoscroll = false;
   })
   
   
-      var socket = io.connect('http://' + window.location.hostname);
+    var socket = io.connect('http://' + window.location.hostname);
     socket.on('connect', function () {
         console.log('Connected');
         grid.onSelectedRowsChanged.subscribe(function()
         {
             socket.emit('getPacketData', data[grid.getSelectedRows()].realTime);
+        });
+        
+        $('#database-clear').click(function(e)
+        {
+            socket.emit('databaseClear');
+            data = [];
+            grid.invalidate();
+            grid.setData(data);
+            console.log('hi')
         });
     });
 

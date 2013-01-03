@@ -116,6 +116,11 @@ function socketRoute(socket)
             socket.emit('packetData', JSON.stringify(packet.get(time)));
         });
         
+        socket.on('databaseClear', function()
+        {
+            packet.clear();
+        });
+        
         socket.on('disconnect', function () {
             packet.removeListener('receive', socket.packet[socket.id]);
         });

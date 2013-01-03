@@ -78,6 +78,11 @@ packet.get = function (time)
     return packetInfo;
 }
 
+packet.clear = function ()
+{
+    db.run("delete from packets;");
+}
+
 packet.decode = function (msg)
 {
     var data = {};
