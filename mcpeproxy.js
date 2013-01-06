@@ -3,7 +3,6 @@ var path = require('path');
 var fs = require('fs');
 var utils = require('./utils');
 var nconf = utils.config.nconf;
-var packet = require('./packet').packet;
 var ipArray = { };
 var client = dgram.createSocket("udp4");;
 var configPath = path.join(__dirname, 'config.json');
@@ -39,6 +38,11 @@ nconf.set('interface:cli', utils.misc.toBoolean(nconf.get('interface:cli')));
 nconf.set('dev', utils.misc.toBoolean(nconf.get('dev')));
 
 nconf.save();
+
+if (nconf.getBoolean('dev'))
+{
+    var packet = require('./packet').packet;
+}
 
 utils.logging.on('logerror', function(msg)
 {
