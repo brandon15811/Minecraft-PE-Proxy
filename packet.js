@@ -71,7 +71,7 @@ packet.get = function (time)
         }
         catch (err)
         {
-            packetInfo["Errorr"] = "Packet decoding failed. Try again.";
+            packetInfo["Error"] = "Packet decoding failed. Try again.";
         }
     });
     return packetInfo;
@@ -151,8 +151,10 @@ packet.decode = function (msg)
             {
                 //TODO: Append to Info column
                 data['Multiple nacks'] = {};
-                data['Multiple nacks']['First Packet number'] = hex.substr(4, 3).readUInt16LE(0);
-                data['Multiple nacks']['Second Packet Number'] = hex.substr(7, 3).readUInt16LE(0);
+                data['Multiple nacks']['First Packet number'] = hex.substr(4, 3)
+                    .readUInt16Le(0);
+                data['Multiple nacks']['Second Packet Number'] = hex.substr(7, 3)
+                    .readUInt16LE(0);
             }
             break;
 
@@ -168,7 +170,8 @@ packet.decode = function (msg)
                 //TODO: Append to Info column
                 data['Multiple acks'] = {};
                 data['Multiple acks']['First Packet number'] = hex.substr(4, 3).readUInt16LE(0);
-                data['Multiple acks']['Second Packet Number'] = hex.substr(7, 3).readUInt16LE(0);
+                data['Multiple acks']['Second Packet Number'] = hex.substr(7, 3)
+                    .readUInt16LE(0);
             }
             break;
 
@@ -219,6 +222,7 @@ packet.decode = function (msg)
                         i = dataStart(part, subData, iS, idp);
 
                         i = getString(part, subData, i, "Name");
+
                         i = getInt(part, subData, i, "Int 1");
                         i = getInt(part, subData, i, "Int 2")
                         break;
@@ -230,6 +234,88 @@ packet.decode = function (msg)
 
                         i = getInt(part, subData, i, "Int 1");
                         break;
+
+                    case 0x84:
+                        dataTotal['ReadyPacket'] = {};
+                        part = dataTotal['ReadyPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getByte(part, subData, i, "Byte");
+                        break;
+
+                    case 0x85:
+                        dataTotal['MessagePacket'] = {};
+                        part = dataTotal['MessagePacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getString(part, subData, i, "Message");
+                        break;
+
+                    case 0x86:
+                        dataTotal['SetTimePacket'] = {};
+                        part = dataTotal['SetTimePacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getShortLE(part, subData, i, "Short 1");
+                        i = getShortLE(part, subData, i, "Short 2");
+                        break;
+
+                    case 0x87:
+                        dataTotal['StartGamePacket'] = {};
+                        part = dataTotal['StartGamePacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Seed");
+                        i = getInt(part, subData, i, "Unknown");
+                        i = getInt(part, subData, i, "Gamemode");
+                        i = getInt(part, subData, i, "Entity ID");
+
+                        i = getFloat(part, subData, i, "X");
+                        i = getFloat(part, subData, i, "Y");
+                        i = getFloat(part, subData, i, "Z");
+                        break;
+
+                    case 0x88:
+                        dataTotal['AddMobPacket'] = {};
+                        part = dataTotal['AddMobPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Entity ID");
+                        i = getMobName(part, subData, i);
+
+                        i = getFloat(part, subData, i, "X");
+                        i = getFloat(part, subData, i, "Y");
+                        i = getFloat(part, subData, i, "Z");
+                        break;
+
+                    case 0x89:
+                        dataTotal['AddPlayerPacket'] = {};
+                        part = dataTotal['AddPlayerPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        part['Client ID'] = subData.substr(i, 8).toString('hex');
+                        i = i + 8;
+
+                        i = getString(part, subData, i, "Name");
+                        i = getInt(part, subData, i, "Entity ID");
+
+                        i = getFloat(part, subData, i, "X");
+                        i = getFloat(part, subData, i, "Y");
+                        i = getFloat(part, subData, i, "Z");
+                        part['Metadata until 0x7f'] = "";
+                        part['**Stuff missing**'] = "";
+                        break;
+
+                    case 0x8a:
+                        dataTotal['RemovePlayerPacket'] = {};
+                        part = dataTotal['RemovePlayerPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Entity ID");
+                        part['Client ID'] = subData.substr(i, 8).toString('hex');
+                        i = i + 8;
+                        break;
+
                     default:
                         data['Error'] = "Data packet type not implemented yet."
                         i = length;
@@ -277,8 +363,7 @@ function dataStart(part, subData, i, idp)
 
 function getMobName(part, subData, i)
 {
-    //FIXME
-    var a = parseInt(subData.substr(i * 2, 8), 16);
+    var a = subData.substr(i, 4).readUInt32BE(0);
     var name = "Unknown name";
     switch (a)
     {
@@ -304,18 +389,36 @@ function getMobName(part, subData, i)
     }
 
     part['Mob Type'] = name;
-    return i + 8;
+    return i + 4;
 }
 
 function getByte(part, subData, i, name)
 {
-    part[name] = subData.substr(i, 1);
+    part[name] = subData.substr(i, 1).toString('hex');
     return i + 1;
 }
 
+function getShort(part, subData, i, name)
+{
+    //TODO: Still needs to be checked
+    part[name] = subData.substr(i, 2).readUInt16LE(0);
+    return i + 2;
+}
+
+function getShortLE(part, subData, i, name)
+{
+    part[name] = subData.substr(i, 2).readUInt16LE(0);
+    return i + 2;
+}
 function getInt(part, subData, i, name)
 {
     part[name] = subData.substr(i, 4).readUInt32BE(0);
+    return i + 4;
+}
+
+function getFloat(part, subData, i, name)
+{
+    part[name] = subData.substr(i, 4).readFloatBE(0);
     return i + 4;
 }
 

@@ -3,6 +3,6 @@ config.json
 node_modules
 npm-debug.log
 test
-packets.db
+*.db*
 .git
 .gitignore

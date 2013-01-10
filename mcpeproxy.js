@@ -4,7 +4,7 @@ var fs = require('fs');
 var utils = require('./utils');
 var nconf = utils.config.nconf;
 var ipArray = { };
-var client = dgram.createSocket("udp4");;
+var client = dgram.createSocket("udp4");
 var configPath = path.join(__dirname, 'config.json');
 
 if (!fs.existsSync(configPath))
