@@ -316,6 +316,46 @@ packet.decode = function (msg)
                         i = i + 8;
                         break;
 
+                    case 0x8c:
+                        dataTotal['AddEntityPacket'] = {};
+                        part = dataTotal['AddEntityPacket'];
+                        i = dataStart(part, subData, iS, idp);
+                        break;
+
+                    case 0x8d:
+                        dataTotal['RemoveEntityPacket'] = {};
+                        part = dataTotal['RemoveEntityPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part,subData, i, "Entity ID");
+                        break;
+
+                    case 0x8e:
+                        dataTotal['AddItemEntityPacket']= {};
+                        part = dataTotal['AddItemEntityPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Int");
+                        i = getShort(part, subData, i, "Short 1");
+                        i = getByte(part, subData, i, "Byte 1");
+                        i = getShort(part, subData, i, "Short 2");
+                        i = getFloat(part, subData, i, "Float 1");
+                        i = getFloat(part, subData, i, "Float 2");
+                        i = getFloat(part, subData, i, "Float 3")
+                        i = getByte(part, subData, i, "Byte 2");
+                        i = getByte(part, subData, i, "Byte 3");
+                        i = getByte(part, subData, i, "Byte 4");
+                        break;
+
+                    case 0x8f:
+                        dataTotal['TakeItemEntityPacket'] = {};
+                        part = dataTotal['TakeItemEntityPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Int 1");
+                        i = getInt(part, subData, i, "Int 2");
+                        break;
+
                     default:
                         data['Error'] = "Data packet type not implemented yet."
                         i = length;
@@ -342,18 +382,21 @@ function dataStart(part, subData, i, idp)
 {
     part['Container'] = subData.substr(i, 1).toString('hex');
     part['Data Length'] = packet.packetLength;
+    console.log(subData.substr(i + 3, 3).toString('hex') + '00');
+    var packetCounter = new Buffer(subData.substr(i + 3, 3).toString('hex') + '00',
+        'hex').readUInt32LE(0);
     if (subData.substr(i, 1).readUInt8(0) === 0x00)
     {
         i = i + 3
     }
     else if (subData.substr(i, 1).readUInt8(0) === 0x40)
     {
-        part['Packet Counter'] = subData.substr(i + 3, 3).readUInt16LE(0);
+        part['Packet Counter'] = packetCounter;
         i= i + 6
     }
     else if (subData.substr(i, 1).readUInt8(0) === 0x60)
     {
-        part['Packet Counter'] = subData.substr((i) + 3, 3).readUInt16LE(0);
+        part['Packet Counter'] = packetCounter;
         part['Unknown'] = subData.substr(i + 6, 4).readUInt16LE(0);
         i = i + 10
     }
@@ -401,7 +444,7 @@ function getByte(part, subData, i, name)
 function getShort(part, subData, i, name)
 {
     //TODO: Still needs to be checked
-    part[name] = subData.substr(i, 2).readUInt16LE(0);
+    part[name] = subData.substr(i, 2).readUInt16BE(0);
     return i + 2;
 }
 

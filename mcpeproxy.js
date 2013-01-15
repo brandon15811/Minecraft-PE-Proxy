@@ -43,7 +43,11 @@ if (nconf.getBoolean('dev'))
 {
     var packet = require('./packet').packet;
 }
-
+else
+{
+    var packet = {};
+    packet.log = function(){};
+}
 utils.logging.on('logerror', function(msg)
 {
     console.error('[ERROR]: ' + msg);
