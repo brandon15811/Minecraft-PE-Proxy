@@ -176,7 +176,8 @@ packet.decode = function (msg)
             break;
 
         case checkData(type):
-            data['Packet Number'] = new Buffer(hex.substr(1, 3), 'hex').readUInt16LE(0);
+            data['Packet Number'] = new Buffer(hex.substr(1, 3).toString('hex') +
+                '00','hex').readUInt32LE(0);
             var subData = hex.substr(4);
             var length = (subData.length) / 8;
             packet.packetLength = 0;
@@ -211,9 +212,10 @@ packet.decode = function (msg)
                 }
                 else if (idp === 0x60)
                 {
-                    i = i + 14
+                    i = i + 7
                 }
                 iX = i
+                console.log(subData.substr(i, 5).toString('hex'))
                 switch(subData.substr(i, 1).readUInt8(0))
                 {
                     case 0x82:
@@ -356,6 +358,75 @@ packet.decode = function (msg)
                         i = getInt(part, subData, i, "Int 2");
                         break;
 
+                    case 0x90:
+                        dataTotal['MoveEntityPacket'] = {};
+                        part = dataTotal['MoveEntityPacket'];
+                        i = dataStart(part, subData, iS, idp);
+                        break;
+
+                    case 0x93:
+                        dataTotal['MoveEntityPacket_PosRot'] = {};
+                        part = dataTotal['MoveEntityPacket_PosRot'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Int");
+                        i = getFloat(part, subData, i, "X");
+                        i = getFloat(part, subData, i, "Y");
+                        i = getFloat(part, subData, i, "Z");
+                        i = getFloat(part, subData, i, "Yaw");
+                        i = getFloat(part, subData, i, "Pitch");
+                        break;
+
+                    case 0x94:
+                        dataTotal['MovePlayerPacket'] = {};
+                        part = dataTotal['MovePlayerPacket'];
+                        i= dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Entity ID");
+                        i = getFloat(part, subData, i, "X");
+                        i = getFloat(part, subData, i, "Y");
+                        i = getFloat(part, subData, i, "Z");
+                        i = getFloat(part, subData, i, "Yaw");
+                        i = getFloat(part, subData, i, "Pitch");
+                        break;
+
+                    case 0x95:
+                        dataTotal['PlaceBlockPacket'] = {};
+                        part = dataTotal['PlaceBlockPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Int");
+                        i = getInt(part, subData, i, "Int");
+                        i = getInt(part, subData, i, "Int");
+                        i = getByte(part, subData, i, "Byte");
+                        i = getByte(part, subData, i, "Byte");
+                        i = getByte(part, subData, i, "Byte");
+                        i = getByte(part, subData, i, "Byte");
+                        break;
+
+                    case 0x96:
+                        dataTotal['RemoveBlockPacket'] = {};
+                        part = dataTotal['RemoveBlockPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "Entity ID");
+                        i = getInt(part, subData, i, "X");
+                        i = getInt(part, subData, i, "Z");
+                        i = getByte(part, subData, i, "Y");
+                        break;
+
+                    case 0x97:
+                        dataTotal['UpdateBlockPacket'] = {};
+                        part = dataTotal['UpdateBlockPacket'];
+                        i = dataStart(part, subData, iS, idp);
+
+                        i = getInt(part, subData, i, "X");
+                        i = getInt(part, subData, i, "Z");
+                        i = getByte(part, subData, i, "Y");
+                        i = getByte(part, subData, i, "Block ID");
+                        i = getByte(part, subData, i, "Block Data");
+                        break;
+
                     default:
                         data['Error'] = "Data packet type not implemented yet."
                         i = length;
@@ -382,7 +453,6 @@ function dataStart(part, subData, i, idp)
 {
     part['Container'] = subData.substr(i, 1).toString('hex');
     part['Data Length'] = packet.packetLength;
-    console.log(subData.substr(i + 3, 3).toString('hex') + '00');
     var packetCounter = new Buffer(subData.substr(i + 3, 3).toString('hex') + '00',
         'hex').readUInt32LE(0);
     if (subData.substr(i, 1).readUInt8(0) === 0x00)
