@@ -140,7 +140,8 @@ function packetReceive(msg, rinfo, sendPort)
         ipArray[rinfo.port].socket.send(msg, 0, msg.length, serverPort,
             serverip);
     }
-    else
+    //Without this, the proxy will crash if the server acts like a client
+    else if (rinfo.port == serverPort)
     {
         var currentTime = new Date().getTime();
         //Measured in milliseconds
