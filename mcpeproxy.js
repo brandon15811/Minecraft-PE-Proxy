@@ -131,7 +131,7 @@ function packetReceive(msg, rinfo, sendPort)
         }
         else
         {
-            ipArray[rinfo.port]['time'] = portTime;
+            ipArray[rinfo.port]['time'] = portTime.getTime();
         }
     }
     if (rinfo.address !== serverip)
@@ -145,6 +145,7 @@ function packetReceive(msg, rinfo, sendPort)
     {
         var currentTime = new Date().getTime();
         //Measured in milliseconds
+        //FIXME: Use setInterval to check for timed out devices
         if ((currentTime - ipArray[sendPort]['time']) > 30000)
         {
             utils.logging.debug("No packets from " + ipArray[sendPort]['ip'] + ":" +
