@@ -1,4 +1,4 @@
-var packet = require('../packet').packet;
+var packet = require('./packet').packet;
 var dgram = require('dgram');
 var client = dgram.createSocket("udp4");
 client.bind(19135);
