@@ -90,7 +90,7 @@ function startProxy()
     }
     utils.logging.info("Proxy listening on port: " + nconf.get('proxyPort'))
     utils.logging.info("Forwarding packets to: " + nconf.get('serverip') + ":" +
-        nconf.get('proxyPort'));
+        nconf.get('serverPort'));
 }
 
 function proxyConfigCheck()
