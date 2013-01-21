@@ -3,11 +3,21 @@ Minecraft-PE-Proxy
 
 Proxy for Minecraft Pocket Edition to connect to internet servers without app modification
 
+Requirements
+============
+Node.js
+-------
+Install node.js from http://nodejs.org/
+
 Usage
 =====
+Downloading
+-----------
+Download and extract source using the ZIP button or this [link.](https://github.com/brandon15811/Minecraft-PE-Proxy/archive/master.zip)
+
 Before first use
 ----------------
-Install dependencies
+Install dependencies (Run in extracted directory)
 ```
 npm install
 ```
