@@ -10,12 +10,12 @@
 </head>
 <body>
 <% include bodyheader.ejs %>
+<div id="config">
+<div>Autoscrolling: <a href='#' id='autoscroll-status' >Disabled</a></div>
+<div><a href='#' id='database-clear' >Clear all packets</a></div>
 <div style="position:relative">
     <div id="myGrid" style="width:100%;height:500px;"></div>
 </div>
-<div id="config">
-<div>Autoscrolling: <a href='#' id='autoscroll-status' >Disabled (click to enable)</a></div>
-<div><a href='#' id='database-clear' >Click to clear all packets (from page and database) </a></div>
 </div>
 <div id="packetInfo"></div>
 
