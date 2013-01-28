@@ -6,7 +6,6 @@ var dataName = require('./pstructs/5').protocol;
 var packetName = require('./pstructs/packetName').packetName;
 var sqlite3 = require('sqlite3');
 var packet = new EventEmitter();
-var startTime = process.hrtime();
 var packetInfo = {};
 var stmt;
 
@@ -20,13 +19,24 @@ try
 catch(err)
 {}
 
+nconf.defaults({
+    'packet': {
+        'startTime': process.hrtime()
+    }
+});
+
+nconf.set('packet:startTime', nconf.get('packet:startTime'));
+nconf.save();
+
+var startTime = nconf.get('packet:startTime');
+
 packet.setMaxListeners(50);
 var db = new sqlite3.Database('packets.db');
 db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='packets'", function(err, row) {
     db.serialize(function() {
         if (typeof(row) === 'undefined')
         {
-            db.run("CREATE TABLE packets (srcip TEXT, srcPort INTEGER, destip TEXT, destPort"
+            db.run("CREATE TABLE packets (srcip TEXT, srcPort INTEGER, destip TEXT, destPort "
                 + "INTEGER, msg BLOB, packetName TEXT, type TEXT, realTime TEXT, "
                 + "sinceStartTime TEXT)");
         }
@@ -67,11 +77,12 @@ packet.get = function (time)
     db.get("SELECT * FROM packets WHERE realTime = ?", time, function(err, row) {
         try
         {
+            packetInfo = {};
             packetInfo = packet.decode(new Buffer(row['msg'], 'hex'));
         }
-        catch (err)
+        catch (errr)
         {
-            packetInfo["Error"] = "Packet decoding failed. Try again.";
+            packetInfo["Error"] = "Packet decoding failed. Try again." + errr;
         }
     });
     return packetInfo;
@@ -80,6 +91,9 @@ packet.get = function (time)
 packet.clear = function ()
 {
     db.run("delete from packets;");
+    nconf.set('packet:startTime', process.hrtime());
+    nconf.save();
+    startTime = nconf.get('packet:startTime');
 }
 
 packet.decode = function (msg)
@@ -215,7 +229,6 @@ packet.decode = function (msg)
                     i = i + 7
                 }
                 iX = i
-                console.log(subData.substr(i, 5).toString('hex'))
                 switch(subData.substr(i, 1).readUInt8(0))
                 {
                     case 0x82:

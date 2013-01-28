@@ -103,7 +103,7 @@ function socketRoute(socket)
         startTime)
         {
             hex = msg.toString('hex');
-            var json = JSON.stringify({'srcip': srcip, 'destip': destip, 'length': hex.length,
+            var json = JSON.stringify({'srcip': srcip, 'destip': destip, 'length': msg.length,
                 'info': info + ": 0x" + type, 'realTime': realTime.join("."),
                 'time': sinceStartTime.join(".")});
            socket.emit("packetReceive", json);

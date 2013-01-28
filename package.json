@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Proxy for Minecraft Pocket Edition to connect to internet servers without app modification",
   "homepage": "https://github.com/brandon15811/Minecraft-PE-Proxy",
-  "main": "mcpeproxy.js",
+  "main": "mcpeproxy",
   "scripts": {
     "test": "exit 0"
   },
@@ -21,7 +21,6 @@
   "author": "brandon15811",
   "license": "GPL",
   "readmeFilename": "README.md",
-  "gitHead": "b5b45fa893089529de4e62e9913e2f9f6f469c50",
   "dependencies": {
     "nconf": "0.6.x",
     "socket.io": "0.9.x",

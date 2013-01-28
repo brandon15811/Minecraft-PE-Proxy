@@ -17,7 +17,7 @@
     <div id="myGrid" style="width:100%;height:500px;"></div>
 </div>
 </div>
-<div id="packetInfo"></div>
+<div id="packetInfo" style="height: 100%; overflow: scroll;"></div>
 
 <script src="/static/js/lib/jquery-1.7.min.js"></script>
 <script src="/static/js/lib/jquery-ui-1.8.16.custom.min.js"></script>
@@ -77,13 +77,15 @@ var autoscroll = false;
     $('#myGrid').resizable();
   })
 
+    function getPacketData()
+    {
+        socket.emit('getPacketData', data[grid.getSelectedRows()].realTime);
+    }
+
     var socket = io.connect('http://' + window.location.hostname);
     socket.on('connect', function () {
         console.log('Connected');
-        grid.onSelectedRowsChanged.subscribe(function()
-        {
-            socket.emit('getPacketData', data[grid.getSelectedRows()].realTime);
-        });
+        grid.onSelectedRowsChanged.subscribe(getPacketData);
 
         $('#database-clear').click(function(e)
         {
@@ -91,8 +93,12 @@ var autoscroll = false;
             data = [];
             grid.invalidate();
             grid.setData(data);
-            console.log('hi')
         });
+    });
+
+    socket.on('disconnect', function()
+    {
+        grid.onSelectedRowsChanged.unsubscribe(getPacketData);
     });
 
     /*socket.on('log', function (data)
@@ -103,7 +109,7 @@ var autoscroll = false;
     socket.on('packetData', function (data)
     {
         json = JSON.parse(data);
-        console.log(json)
+        console.dir(json)
         function json2html(data, level, indent) {
             if (typeof(data) == 'object') {
                 var div = $('<div>');
