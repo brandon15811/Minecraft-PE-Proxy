@@ -19,7 +19,7 @@ Before first use
 ----------------
 Install dependencies (Run in extracted directory)
 ```
-npm install
+npm install --production
 ```
 Running the proxy
 -----------------
