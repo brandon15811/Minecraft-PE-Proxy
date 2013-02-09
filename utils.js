@@ -52,6 +52,11 @@ config.nconf.getBoolean = function(key)
     return misc.toBoolean(config.nconf.get(key))
 }
 
+config.nconf.getInt = function(key)
+{
+    return parseInt(config.nconf.get(key))
+}
+
 exports.logging = logging;
 exports.config = config;
 exports.misc = misc;

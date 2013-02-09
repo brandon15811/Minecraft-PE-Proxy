@@ -1,11 +1,29 @@
+console.log('Make sure to run npm install after every update to check for new dependencies!')
 var dgram = require('dgram');
 var path = require('path');
 var fs = require('fs');
+var dns = require('dns');
+var check = require('validator').check
+var EventEmitter = require('events').EventEmitter;
 var utils = require('./utils');
 var nconf = utils.config.nconf;
 var ipArray = { };
 var client = dgram.createSocket("udp4");
 var configPath = path.join(__dirname, 'config.json');
+var proxy = new EventEmitter();
+var serverip;
+var serverPort;
+var packet;
+
+try
+{
+    require('console-trace')({
+        always: true,
+        cwd: __dirname
+    })
+}
+catch(err)
+{}
 
 if (!fs.existsSync(configPath))
 {
@@ -24,36 +42,63 @@ nconf.defaults({
     'dev': false
 });
 
-var serverip = nconf.get('serverip');
-var serverPort = nconf.get('serverPort');
-
-//Proxy settings
-nconf.set('serverip', serverip);
-nconf.set('serverPort', parseInt(serverPort));
-nconf.set('proxyPort', parseInt(nconf.get('proxyPort')));
-//Interface settings
-nconf.set('interface:webserver', utils.misc.toBoolean(nconf.get('interface:webserver')));
-nconf.set('interface:cli', utils.misc.toBoolean(nconf.get('interface:cli')));
-//Developer Mode
-nconf.set('dev', utils.misc.toBoolean(nconf.get('dev')));
-
-nconf.save();
-
-if (nconf.getBoolean('dev'))
+proxy.on('dnsLookup', function()
 {
-    var packet = require('./packet').packet;
-}
-else
+    dns.lookup(nconf.get('serverip'), function(err, address, family)
+    {
+        if (err !== null)
+        {
+            if (err.code === 'ENOTFOUND')
+            {
+                utils.logging.logerror('Domain not found')
+                process.exit(1);
+            }
+            else
+            {
+                utils.logging.logerror('Unknown error: ' + err.code);
+                process.exit(1);
+            }
+        }
+        proxy.emit('setConfig', address);
+    });
+});
+
+proxy.on('setConfig', function(address)
 {
-    var packet = {};
-    packet.log = function(){};
-}
+    //Proxy settings
+    nconf.set('serverip', nconf.get('serverip'));
+    nconf.set('serverPort', nconf.get('serverPort'));
+    nconf.set('proxyPort', nconf.getInt('proxyPort'));
+    //Interface settings
+    nconf.set('interface:webserver', nconf.getBoolean('interface:webserver'));
+    nconf.set('interface:cli', nconf.getBoolean('interface:cli'));
+    //Developer Mode
+    nconf.set('dev', nconf.getBoolean('dev'));
+
+    serverip = address;
+    serverPort = nconf.get('serverPort');
+
+    nconf.save();
+
+    if (nconf.getBoolean('dev'))
+    {
+        packet = require('./packet').packet;
+    }
+    else
+    {
+        packet = {};
+        packet.log = function(){};
+    }
+    proxyStart();
+
+});
+
+proxyConfigCheck();
+
 utils.logging.on('logerror', function(msg)
 {
     console.error('[ERROR]: ' + msg);
 });
-
-proxyConfigCheck();
 
 utils.config.on('serverChange', function(msg)
 {
@@ -66,11 +111,11 @@ utils.config.on('serverChange', function(msg)
         client.close();
         nconf.set('proxyPort', parseInt(msg.proxyPort))
         client = dgram.createSocket("udp4");
-        startProxy();
+        proxyStart();
     }
 });
 
-function startProxy()
+function proxyStart()
 {
     client.bind(nconf.get('proxyPort'));
     client.setBroadcast(true);
@@ -89,18 +134,12 @@ function startProxy()
         webserver.start();
     }
     utils.logging.info("Proxy listening on port: " + nconf.get('proxyPort'))
-    utils.logging.info("Forwarding packets to: " + nconf.get('serverip') + ":" +
+    utils.logging.info("Forwarding packets to: " + serverip + ":" +
         nconf.get('serverPort'));
 }
 
 function proxyConfigCheck()
 {
-    if (typeof(serverip) === 'undefined')
-    {
-        utils.logging.logerror('No server ip set. Set one with --serverip <server ip> (only'
-        + ' needed on first launch or when changing ips)');
-        process.exit(1);
-    }
     if (!utils.misc.isNumber(nconf.get('serverPort')))
     {
         utils.logging.logerror('Port specified for --serverPort is not a number')
@@ -110,6 +149,24 @@ function proxyConfigCheck()
     {
         utils.logging.logerror('Port specified for --proxyPort is not a number')
         process.exit(1);
+    }
+    if (typeof(nconf.get('serverip')) === 'undefined')
+    {
+        utils.logging.logerror('No server ip set. Set one with --serverip <server ip> (only'
+        + ' needed on first launch or when changing ips)');
+        process.exit(1);
+    }
+    try
+    {
+        //check() throws an error on invalid input
+        check(nconf.get('serverip')).isIP();
+        proxy.emit('setConfig', nconf.get('serverip'));
+    }
+    catch (err)
+    {
+        check(nconf.get('serverip'), "Enter a valid IP or hostname (hostnames like localhost are"
+        + " not supported)").isUrl();
+        proxy.emit('dnsLookup');
     }
 }
 
@@ -174,5 +231,3 @@ process.on('SIGINT', function()
         process.exit();
     });
 });
-
-startProxy();

@@ -9,16 +9,6 @@ var packet = new EventEmitter();
 var packetInfo = {};
 var stmt;
 
-try
-{
-    require('console-trace')({
-        always: true,
-        cwd: __dirname
-    })
-}
-catch(err)
-{}
-
 nconf.defaults({
     'packet': {
         'startTime': process.hrtime()
