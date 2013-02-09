@@ -15,7 +15,7 @@ Downloading
 -----------
 Download and extract source using the ZIP button or this [link.](https://github.com/brandon15811/Minecraft-PE-Proxy/archive/master.zip)
 
-Before first use
+Before first use (and after every update)
 ----------------
 Install dependencies (Run in extracted directory)
 ```
