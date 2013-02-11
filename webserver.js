@@ -15,7 +15,14 @@ webserver.start = function()
 {
     app.listen(8001);
     socketServer = io.listen(app);
-    socketServer.set('log level', 2)
+    if (!nconf.getBoolean('dev'))
+    {
+        socketServer.set('log level', 1);
+    }
+    else
+    {
+        socketServer.set('log level', 2);
+    }
     socketServer.sockets.on('connection', function(socket)
     {
         socketRoute(socket)

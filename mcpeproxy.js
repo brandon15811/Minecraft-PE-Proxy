@@ -1,19 +1,16 @@
-console.log('Make sure to run npm install after every update to check for new dependencies!')
+console.log('Make sure to run npm install after every update to check for new dependencies!');
 var dgram = require('dgram');
-var path = require('path');
-var fs = require('fs');
 var dns = require('dns');
 var check = require('validator').check
 var EventEmitter = require('events').EventEmitter;
 var utils = require('./utils');
+var packet = require('./packet').packet;
 var nconf = utils.config.nconf;
 var ipArray = { };
 var client = dgram.createSocket("udp4");
-var configPath = path.join(__dirname, 'config.json');
 var proxy = new EventEmitter();
 var serverip;
 var serverPort;
-var packet;
 
 try
 {
@@ -25,13 +22,7 @@ try
 catch(err)
 {}
 
-if (!fs.existsSync(configPath))
-{
-    fs.writeFileSync(configPath, '{}');
-}
-//Read config from command line arguments, environment variables, and the config file
-//(each one takes precedence over the next)
-nconf.argv().env().file({ file: configPath });
+//Set default config values for proxy
 nconf.defaults({
     'serverPort': 19132,
     'proxyPort': 19133,
@@ -41,7 +32,6 @@ nconf.defaults({
     },
     'dev': false
 });
-
 proxy.on('dnsLookup', function()
 {
     dns.lookup(nconf.get('serverip'), function(err, address, family)
@@ -80,25 +70,16 @@ proxy.on('setConfig', function(address)
 
     nconf.save();
 
-    if (nconf.getBoolean('dev'))
-    {
-        packet = require('./packet').packet;
-    }
-    else
-    {
-        packet = {};
-        packet.log = function(){};
-    }
     proxyStart();
 
 });
-
-proxyConfigCheck();
 
 utils.logging.on('logerror', function(msg)
 {
     console.error('[ERROR]: ' + msg);
 });
+
+proxyConfigCheck();
 
 utils.config.on('serverChange', function(msg)
 {

@@ -2,10 +2,16 @@
 var utils = require('./utils');
 var nconf = utils.config.nconf;
 var EventEmitter = require('events').EventEmitter;
+var packet = new EventEmitter();
+if (!nconf.getBoolean('dev'))
+{
+    packet.log = function(){}
+    exports.packet = packet;
+    return;
+}
 var dataName = require('./pstructs/5').protocol;
 var packetName = require('./pstructs/packetName').packetName;
 var sqlite3 = require('sqlite3');
-var packet = new EventEmitter();
 var packetInfo = {};
 var stmt;
 
