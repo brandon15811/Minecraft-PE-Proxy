@@ -8,6 +8,9 @@ Requirements
 Node.js
 -------
 Install node.js from http://nodejs.org/
+Requires node 0.8
+http://nodejs.org/dist/v0.8.22/
+Use .msi for Windows, and .pkg for Mac
 
 Usage
 =====
