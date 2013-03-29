@@ -33,4 +33,9 @@ Where `<server ip>` is the ip of the server to connect to
 The ip will be saved into the config file
 (Also can be specified via the environment variable "serverip")
 
+Support
+-------
+Either file an [issue](https://github.com/brandon15811/Minecraft-PE-Proxy/issues) or come to the irc channel: [#mcpedevs @ Freenode](http://webchat.freenode.net/?channels=mcpedevs&uio=d4)
+
+
 More detailed documentation will be added when this is more complete
