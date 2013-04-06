@@ -11,13 +11,16 @@ var client = dgram.createSocket("udp4");
 var proxy = new EventEmitter();
 var serverip;
 var serverPort;
-
+//Modules to make debugging easier
 try
 {
+    //Appends file and line numbers to console output
     require('console-trace')({
         always: true,
         cwd: __dirname
     })
+    //Longer Stacktraces
+    require('longjohn');
 }
 catch(err)
 {}
@@ -99,7 +102,6 @@ utils.config.on('serverChange', function(msg)
 function proxyStart()
 {
     client.bind(nconf.get('proxyPort'));
-    client.setBroadcast(true);
     client.on("message", function(msg, rinfo)
     {
         packetReceive(msg, rinfo);
@@ -145,8 +147,8 @@ function proxyConfigCheck()
     }
     catch (err)
     {
-        check(nconf.get('serverip'), "Enter a valid IP or hostname (hostnames like localhost are"
-        + " not supported)").isUrl();
+        check(nconf.get('serverip'), "Enter a valid IP or hostname (hostnames like localhost"
+        + " are not supported)").isUrl();
         proxy.emit('dnsLookup');
     }
 }
