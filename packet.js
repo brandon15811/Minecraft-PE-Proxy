@@ -14,6 +14,7 @@ var packetName = require('./pstructs/packetName').packetName;
 var sqlite3 = require('sqlite3');
 var packetInfo = {};
 var stmt;
+var packetCounter = Array();
 
 nconf.defaults({
     'packet': {
@@ -479,7 +480,14 @@ function dataStart(part, subData, i, idp)
         part['Unknown'] = subData.substr(i + 6, 4).readUInt16LE(0);
         i = i + 10
     }
+    //Add if statement to check for duplicate packet counter
+    if (packetCounter.indexOf(part['Packet Counter']) !== -1)
+    {
+        utils.logging.debug(part['Packet Counter'] + "packet detected more than once");
+    }
+    packetCounter.push(part['Packet Counter']);
     part['MCPE ID'] = subData.substr(i, 1).toString('hex');
+
     return i + 1;
 }
 
