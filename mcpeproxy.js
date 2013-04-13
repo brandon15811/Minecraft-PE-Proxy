@@ -31,7 +31,7 @@ nconf.defaults({
     'proxyPort': 19133,
     'interface': {
         'cli': true,
-        'webserver': true
+        'webserver': false
     },
     'dev': false
 });

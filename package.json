@@ -23,13 +23,13 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "nconf": "0.6.x",
-    "socket.io": "0.9.x",
     "ejs": "0.8.x",
     "node-static": "0.6.x",
     "validator": "0.4.x"
   },
   "engine": "node 0.8.x",
   "devDependencies": {
-    "sqlite3": "2.1.x"
+    "sqlite3": "2.1.x",
+    "socket.io": "0.9.x"
   }
 }
