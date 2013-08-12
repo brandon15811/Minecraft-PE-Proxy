@@ -46,6 +46,10 @@ switch (type)
 
     //Add NACK
 
+    case 0x99:
+        hex = '9900';
+        break;
+
     case checkData(type):
         dataType = new Buffer(process.argv['3'], 'hex').readUInt8(0);
         switch(dataType)

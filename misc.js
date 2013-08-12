@@ -15,7 +15,7 @@
         console.log((packetID + packetMagic + serverID + packetPort + packetMTU + "00").length);
         console.log(packetPort);
         //("0800ffff00fefefefefdfdfdfd12345678ffffffffc0ce8a0ac50105b800",'hex');
-        client.send(msg, 0, msg.length, serverPort, serverip);
+        client.send(msg, 0, msg.length, serverPort, serverIP);
         client.send(packett, 0, packett.length, rinfo.port, rinfo.address);
         console.log("Sending special 0x08 packet to " + rinfo.address + ":" + rinfo.port);
     }

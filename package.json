@@ -25,7 +25,11 @@
     "nconf": "0.6.x",
     "ejs": "0.8.x",
     "node-static": "0.6.x",
-    "validator": "0.4.x"
+    "validator": "0.4.x",
+    "mysql": "~2.0.0-alpha8",
+    "director": "1.2.x",
+    "request": "2.26.x",
+    "formidable": "1.0.1x"
   },
   "engine": "node 0.8.x",
   "devDependencies": {

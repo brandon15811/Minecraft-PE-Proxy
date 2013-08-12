@@ -3,12 +3,12 @@ var utils = require('./utils');
 var nconf = utils.config.nconf;
 var EventEmitter = require('events').EventEmitter;
 var packet = new EventEmitter();
-if (!nconf.getBoolean('dev'))
+/*if (!nconf.getBoolean('dev'))
 {
-    packet.log = function(){}
+//    packet.log = function(){}
     exports.packet = packet;
     return;
-}
+}*/
 var dataName = require('./pstructs/5').protocol;
 var packetName = require('./pstructs/packetName').packetName;
 var sqlite3 = require('sqlite3');
@@ -33,17 +33,14 @@ db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='packets'", f
     db.serialize(function() {
         if (typeof(row) === 'undefined')
         {
-            db.run("CREATE TABLE packets (srcip TEXT, srcPort INTEGER, destip TEXT, destPort "
+            db.run("CREATE TABLE packets (srcIP TEXT, srcPort INTEGER, destIP TEXT, destPort "
                 + "INTEGER, msg BLOB, packetName TEXT, type TEXT, realTime TEXT, "
                 + "sinceStartTime TEXT)");
         }
         stmt = db.prepare("INSERT INTO packets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     });
 });
-
-
-
-packet.log = function (srcip, srcPort, destip, destPort, msg)
+packet.on('receiveRaw', function (srcIP, srcPort, destIP, destPort, msg)
 {
     if (nconf.getBoolean('dev'))
     {
@@ -54,18 +51,18 @@ packet.log = function (srcip, srcPort, destip, destPort, msg)
         {
             realTime = process.hrtime();
             sinceStartTime = process.hrtime(startTime);
-            packet.store(srcip, srcPort, destip, destPort, msg,
+            packet.store(srcIP, srcPort, destIP, destPort, msg,
                 packetName["0x" + type], type, realTime, sinceStartTime);
-            packet.emit('receive', srcip, srcPort, destip, destPort, msg,
+            packet.emit('receive', srcIP, srcPort, destIP, destPort, msg,
                 packetName["0x" + type], type, realTime, sinceStartTime);
         }
     }
-}
+});
 
-packet.store = function (srcip, srcPort, destip, destPort, msg, packetName, type, realTime,
+packet.store = function (srcIP, srcPort, destIP, destPort, msg, packetName, type, realTime,
     sinceStartTime)
 {
-    stmt.run(srcip, srcPort, destip, destPort, msg.toString('hex'), packetName, type,
+    stmt.run(srcIP, srcPort, destIP, destPort, msg.toString('hex'), packetName, type,
         realTime.join("."), sinceStartTime.join("."));
 }
 
