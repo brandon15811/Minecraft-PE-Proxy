@@ -87,7 +87,7 @@ router.post('/server/:IP/:port/status/:status', function(IP, port, status)
         else if (result['affectedRows'] !== 0 && result['changedRows'] === 0)
         {
             res.writeHead(200);
-            res.end("Server status already set to " + status )
+            res.end("Server status already set to " + status);
         }
         else
         {
@@ -141,7 +141,7 @@ web.start = function()
 {
     server.listen(8001, nconf.get('loadbalancer:webIP'), function()
     {
-        address = server.address()
+        address = server.address();
         utils.logging.info('Loadbalancer web server listening on ' + address['address'] + ':' + address['port']);
     });
 }

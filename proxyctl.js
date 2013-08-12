@@ -10,12 +10,12 @@ var shasum = crypto.createHash('sha1');
 
 var currentTime = utils.currentTime();
 
-var proxyIP = '127.0.0.1'
+var proxyIP = '127.0.0.1';
 var proxyPort = 8001;
 
 shasum.update(tokenSecret + ":" + currentTime + ":" + proxyIP);
 sha1sum = shasum.digest('hex');
-var formData = {'token': sha1sum, 'time': currentTime}
+var formData = {'token': sha1sum, 'time': currentTime};
 
 router.on("refresh", function()
 {

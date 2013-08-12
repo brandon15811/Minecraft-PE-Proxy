@@ -2,7 +2,7 @@ console.log('Make sure to run npm install after every update to check for new de
 var dgram = require('dgram');
 var dns = require('dns');
 var crypto = require('crypto');
-var check = require('validator').check
+var check = require('validator').check;
 var mysql = require('mysql');
 var EventEmitter = require('events').EventEmitter;
 var utils = require('./utils');
@@ -10,7 +10,7 @@ var packet = require('./packet').packet;
 var nconf = utils.config.nconf;
 var IPArray = {};
 var portArray = {};
-var client = dgram.createSocket("udp4");
+var client = dgram.createSocket('udp4');
 var proxy = new EventEmitter();
 var proxyStarted = false;
 var serverIP;
@@ -22,9 +22,6 @@ var serverIPList = [];
 var serverIPPortList = [];
 var updateList = [];
 
-////TODO: change to a plugin
-var web = require('./web');
-
 //Modules to make debugging easier
 try
 {
@@ -32,7 +29,7 @@ try
     require('console-trace')({
         always: true,
         cwd: __dirname
-    })
+    });
     //Longer Stacktraces
     require('longjohn');
 }
@@ -74,7 +71,7 @@ proxy.on('dnsLookup', function()
         {
             if (err.code === 'ENOTFOUND')
             {
-                utils.logging.logerror('Domain not found')
+                utils.logging.logerror('Domain not found');
                 process.exit(1);
             }
             else
@@ -143,8 +140,8 @@ utils.config.on('serverChange', function(msg)
     if (msg.proxyPort != nconf.get('proxyPort'))
     {
         client.close();
-        nconf.set('proxyPort', parseInt(msg.proxyPort))
-        client = dgram.createSocket("udp4");
+        nconf.set('proxyPort', parseInt(msg.proxyPort));
+        client = dgram.createSocket('udp4');
         proxyStart();
     }
 });
@@ -156,18 +153,19 @@ function proxyStart()
     {
         clientIPSetup(msg, rinfo);
     });
-    if (nconf.get("interface:cli") == true)
+    if (nconf.getBoolean("interface:cli") === true)
     {
         var cli = require('./cli').cli;
         cli.start();
     }
     ////FIXME: Old webserver removed, replace with new one
-    if (nconf.get("interface:web") == true)
+    if (nconf.getBoolean("interface:web") === true)
     {
+        ////TODO: change to a plugin
         var web = require('./web').web;
         web.start();
     }
-    utils.logging.info("Proxy listening on port: " + nconf.get('proxyPort'))
+    utils.logging.info("Proxy listening on port: " + nconf.get('proxyPort'));
     var serverList = "";
     for (var key in servers)
     {
@@ -187,7 +185,7 @@ function proxyConfigCheck()
     }*/
     if (!utils.misc.isNumber(nconf.get('proxyPort')))
     {
-        utils.logging.logerror('Port specified for --proxyPort is not a number')
+        utils.logging.logerror('Port specified for --proxyPort is not a number');
         process.exit(1);
     }
     ////TODO: Re-enable later
@@ -240,7 +238,7 @@ function clientIPSetup(msg, rinfo, sendPort)
                             'port': rows[0]['destServerPort']
                         },
                         'time': rows[0]['lastTime']
-                    }
+                    };
                     utils.logging.debug('New client added: ' + rinfo.address);
                     clientPortSetup(msg, rinfo);
                 }
@@ -255,13 +253,13 @@ function clientIPSetup(msg, rinfo, sendPort)
                         //Choose random server
                         'destServer': servers[Math.floor(Math.random() * servers.length)],
                         'time': Math.round(utils.currentTime())
-                    }
+                    };
                     var data = {
                         'id': rinfo.address,
                         'destServerIP': IPArray[rinfo.address]['destServer']['IP'],
                         'destServerPort': IPArray[rinfo.address]['destServer']['port'],
                         'lastTime': IPArray[rinfo.address]['time']
-                    }
+                    };
                     mysqlConn.query('INSERT INTO clients SET ?', data, function(err, result)
                     {
                         utils.logging.debug('New client added: ' + rinfo.address);
@@ -306,7 +304,7 @@ function clientPortSetup(msg, rinfo, sendPort)
                         'IP': rows[0]['destServerIP'],
                         'port': rows[0]['destServerPort'],
                     }
-                }
+                };
                 portArray[rinfo.port].socket.bind(rinfo.port);
                 portArray[rinfo.port].socket.on("message", function(msgg, rinfoo)
                 {
@@ -328,7 +326,7 @@ function clientPortSetup(msg, rinfo, sendPort)
                     'time': utils.currentTime(),
                     'socket': dgram.createSocket("udp4"),
                     'destServer': IPArray[rinfo.address]['destServer']
-                }
+                };
                 var data = {
                     'id': rinfo.port,
                     'IP': rinfo.address,
@@ -336,7 +334,7 @@ function clientPortSetup(msg, rinfo, sendPort)
                     'destServerIP': portArray[rinfo.port]['destServer']['IP'],
                     'destServerPort': portArray[rinfo.port]['destServer']['port'],
                     'lastTime': portArray[rinfo.port]['time']
-                }
+                };
                 portArray[rinfo.port].socket.bind(rinfo.port);
                 portArray[rinfo.port].socket.on("message", function(msgg, rinfoo)
                 {
@@ -365,7 +363,7 @@ function clientPortSetup(msg, rinfo, sendPort)
 
 function packetReceive(msg, rinfo, sendPort)
 {
-    type = msg.toString('hex').substr(0,2)
+    type = msg.toString('hex').substr(0,2);
     //Send packets to server
     if (serverIPList.indexOf(rinfo.address) === -1)
     {
@@ -391,30 +389,30 @@ setInterval(function()
         return;
     }
     var currentTime = utils.currentTime();
-    for (var key in portArray)
+    for (var port in portArray)
     {
-        if(portArray.hasOwnProperty(key))
+        if(portArray.hasOwnProperty(port))
         {
             //Remove clients that haven't sent any packets in 30 seconds
-            if ((currentTime - portArray[key]['time']) > 30)
+            if ((currentTime - portArray[port]['time']) > 30)
             {
-                utils.logging.debug("No packets from " + portArray[key]['IP'] + ":" +
-                    portArray[key]['port'] + ", removing device");
-                portArray[key].socket.close();
-                delete portArray[key];
+                utils.logging.debug("No packets from " + portArray[port]['IP'] + ":" +
+                    portArray[port]['port'] + ", removing device");
+                portArray[port].socket.close();
+                delete portArray[port];
             }
         }
     }
 
-    for (var key in IPArray)
+    for (var IP in IPArray)
     {
-        if(IPArray.hasOwnProperty(key))
+        if(IPArray.hasOwnProperty(IP))
         {
             //Remove clients that haven't sent any packets in 30 seconds
-            if ((currentTime - IPArray[key]['time']) > 30)
+            if ((currentTime - IPArray[IP]['time']) > 30)
             {
-                utils.logging.debug("No packets from " + IPArray[key]['destServer']['IP'] + ", removing device");
-                delete IPArray[key];
+                utils.logging.debug("No packets from " + IPArray[IP]['destServer']['IP'] + ", removing device");
+                delete IPArray[IP];
             }
         }
     }
@@ -433,10 +431,10 @@ setInterval(function()
         return;
     }
     var currentTime = utils.currentTime();
-    var oldUpdateList = updateList
+    var oldUpdateList = updateList;
     updateList = [];
-    mysqlConn.query('UPDATE clients SET lastTime = ? WHERE id IN(\''
-    + oldUpdateList.join("','") + '\')', currentTime,
+    mysqlConn.query('UPDATE clients SET lastTime = ? WHERE id IN(\'' +
+    oldUpdateList.join("','") + '\')', currentTime,
     function(err, result)
     {
         utils.logging.mysql(result);
@@ -496,8 +494,8 @@ utils.config.on('serverHeartbeat', function(IP, port, callback)
                 'name': IP + ":" + port,
                 'open': 1,
                 'lastTime': utils.currentTime()
-            }
-        mysqlConn.query("INSERT INTO servers SET ?", data,
+            };
+            mysqlConn.query("INSERT INTO servers SET ?", data,
             function(err, result)
             {
                 utils.logging.mysql(result);
@@ -528,14 +526,14 @@ function updateServers(callback)
         for (var key in rows)
         {
             serverIPList.push(rows[key]['IP']);
-            serverIPPortList.push(rows[key]['IP'] + rows[key]['port'])
+            serverIPPortList.push(rows[key]['IP'] + rows[key]['port']);
             if (rows[key]['open'] === 1 && rows[key]['lastTime'] > expiryTime)
             {
                 servers.push(rows[key]);
             }
             else
             {
-                closedServers.push(rows[key]['IP'] + rows[key]['port'])
+                closedServers.push(rows[key]['IP'] + rows[key]['port']);
             }
         }
         if (typeof(callback) === 'function')

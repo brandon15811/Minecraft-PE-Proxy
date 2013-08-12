@@ -40,7 +40,7 @@ logging.logerror = function (msg)
     if (checkLogging('logerror'))
     {
         logging.emit('logerror', msg);
-    };
+    }
 }
 
 logging.mysql = function (msg)
@@ -58,7 +58,7 @@ config.change = function (event, options)
 
 misc.isNumber = function (n)
 {
-  return !isNaN(parseFloat(n)) && isFinite(n);
+    return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 misc.toBoolean = function (obj)
@@ -80,12 +80,12 @@ misc.currentTime = function()
 
 config.nconf.getBoolean = function(key)
 {
-    return misc.toBoolean(config.nconf.get(key))
+    return misc.toBoolean(config.nconf.get(key));
 }
 
 config.nconf.getInt = function(key)
 {
-    return parseInt(config.nconf.get(key))
+    return parseInt(config.nconf.get(key));
 }
 
 function checkLogging(type)
