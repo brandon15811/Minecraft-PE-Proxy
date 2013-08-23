@@ -29,7 +29,7 @@
     "mysql": "~2.0.0-alpha8",
     "director": "1.2.x",
     "request": "2.26.x",
-    "formidable": "1.0.1x"
+    "formidable": "~1.0.14"
   },
   "engine": "node 0.8.x",
   "devDependencies": {

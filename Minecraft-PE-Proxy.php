@@ -55,7 +55,7 @@ class ProxyHeartbeat implements Plugin
         if($error === 0)
         {
             //TODO: Fix time interval
-            $this->api->schedule(20 * 5, array($this, "heartbeat"), array(), true);
+            $this->api->schedule(20 * 20, array($this, "heartbeat"), array(), true);
             $this->api->console->register("proxy", "Control Minecraft-PE-Proxy", array($this, "proxyCommandHandler"));
             $this->api->addHandler("player.quit", array($this, "eventHandler"), 50);
             $this->api->addHandler("player.connect", array($this, "eventHandler"), 50);

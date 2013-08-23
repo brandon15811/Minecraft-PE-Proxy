@@ -115,7 +115,7 @@ proxy.on('setConfig', function(address)
     {
         if (err)
         {
-            utils.logging.logerror('An error occured while loading servers: ' + err);
+            utils.logging.logerror('A MySQL error occured while loading servers: ' + err);
             process.exit(1);
         }
         proxyStart();
