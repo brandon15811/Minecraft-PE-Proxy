@@ -151,7 +151,9 @@ class ProxyHeartbeat implements Plugin
             "url" => "http://".$this->config->get("proxyAddress").":8001/server/".$this->config->get("serverAddress")."/".$this->config->get("serverPort")."/".$method,
             "data" => array(
                 "token" => $token,
-                "time" => $currentTime
+                "time" => $currentTime,
+                "maxPlayers" => $this->server->maxClients,
+                "currentPlayers" => count($this->api->player->getAll()),
             ),
         ));
     }

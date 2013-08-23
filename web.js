@@ -100,7 +100,9 @@ router.post('/server/:IP/:port/status/:status', function(IP, port, status)
 router.post('/server/:IP/:port/heartbeat', function(IP, port)
 {
     res = this.res;
-    utils.config.emit('serverHeartbeat', IP, port, function(err, result)
+    fields = this.req.fields;
+    utils.config.emit('serverHeartbeat', IP, port, fields.currentPlayers, fields.maxPlayers,
+    function(err, result)
     {
         if (err)
         {

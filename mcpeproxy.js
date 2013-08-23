@@ -470,7 +470,7 @@ utils.config.on('changeServerStatus', function(IP, port, status, callback)
     });
 });
 
-utils.config.on('serverHeartbeat', function(IP, port, callback)
+utils.config.on('serverHeartbeat', function(IP, port, currentPlayers, maxPlayers, callback)
 {
     mysqlConn.query("SELECT * FROM servers WHERE IP = ? AND port = ?", [IP, port],
     function(error, rows)
@@ -478,8 +478,8 @@ utils.config.on('serverHeartbeat', function(IP, port, callback)
         utils.logging.mysql(rows);
         if (rows.length !== 0)
         {
-            mysqlConn.query("UPDATE servers SET lastTime = ? WHERE IP = ? AND port = ?",
-            [utils.currentTime(), IP, port],
+            mysqlConn.query("UPDATE servers SET lastTime = ?, currentPlayers = ?, maxPlayers = ? WHERE IP = ? AND port = ?",
+            [utils.currentTime(), currentPlayers, maxPlayers, IP, port],
             function(err, result)
             {
                 utils.logging.mysql(result);
@@ -493,7 +493,9 @@ utils.config.on('serverHeartbeat', function(IP, port, callback)
                 'port': port,
                 'name': IP + ":" + port,
                 'open': 1,
-                'lastTime': utils.currentTime()
+                'lastTime': utils.currentTime(),
+                'currentPlayers': currentPlayers,
+                'maxPlayers': maxPlayers
             };
             mysqlConn.query("INSERT INTO servers SET ?", data,
             function(err, result)
