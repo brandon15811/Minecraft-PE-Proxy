@@ -580,12 +580,12 @@ if (nconf.getBoolean('loadbalancer:realms:enabled') === true)
     //Send PocketMine Realms heartbeat
     setInterval(function()
     {
-        request.post('http://peoapi.minecraft.net/server/heartbeat',
+        request.post('http://peoapi.pocketmine.net/server/heartbeat',
         {
             'form': {
                 'ip': nconf.get('loadbalancer:realms:externalAddress'),
                 'port': nconf.get('loadbalancer:realms:externalPort'),
-                'ownerName': nconf.get('loadbalancer:realms:externalAddress'),
+                'ownerName': nconf.get('loadbalancer:realms:ownerName'),
                 'name': nconf.get('loadbalancer:realms:serverName'),
                 'maxNrPlayers': maxPlayers,
                 'nrPlayers': currentPlayers,
@@ -595,11 +595,11 @@ if (nconf.getBoolean('loadbalancer:realms:enabled') === true)
         },
         function(error, response, body)
         {
-            /*if (error)
+            if (error)
             {
-                console.log(error);
+                utils.logging.logerror(response, error);
             }
-            console.log(body);*/
+            utils.logging.debug(body);
         });
     }, 45000); //45 seconds
 }
