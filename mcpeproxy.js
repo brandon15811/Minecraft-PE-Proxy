@@ -4,6 +4,7 @@ var dns = require('dns');
 var crypto = require('crypto');
 var check = require('validator').check;
 var mysql = require('mysql');
+var request = require('request');
 var EventEmitter = require('events').EventEmitter;
 var utils = require('./utils');
 var packet = require('./packet').packet;
@@ -17,6 +18,8 @@ var serverIP;
 var serverPort;
 var servers;
 var mysqlConn;
+var currentPlayers;
+var maxPlayers;
 var closedServers = [];
 var serverIPList = [];
 var serverIPPortList = [];
@@ -37,6 +40,7 @@ catch(err)
 {}
 
 //Set default config values for proxy
+//Commented values are available options that don't have a default
 nconf.defaults({
     'serverPort': 19132,
     'proxyPort': 19133,
@@ -53,7 +57,16 @@ nconf.defaults({
     },
     'loadbalancer': {
         'tokenSecret': crypto.randomBytes(40).toString('hex'),
-        'webIP': '0.0.0.0'
+        'webIP': '0.0.0.0',
+        'realms': {
+        //TODO: fix these to production values
+            'enabled': false,
+            'externalAddress': '',
+            'externalPort': '',
+            'ownerName': '',
+            'serverName': '',
+            'type': 1
+        }
     },
     'logging': {
         'debug': false,
@@ -470,7 +483,7 @@ utils.config.on('changeServerStatus', function(IP, port, status, callback)
     });
 });
 
-utils.config.on('serverHeartbeat', function(IP, port, currentPlayers, maxPlayers, callback)
+utils.config.on('serverHeartbeat', function(IP, port, currentNumPlayers, maxNumPlayers, callback)
 {
     mysqlConn.query("SELECT * FROM servers WHERE IP = ? AND port = ?", [IP, port],
     function(error, rows)
@@ -479,7 +492,7 @@ utils.config.on('serverHeartbeat', function(IP, port, currentPlayers, maxPlayers
         if (rows.length !== 0)
         {
             mysqlConn.query("UPDATE servers SET lastTime = ?, currentPlayers = ?, maxPlayers = ? WHERE IP = ? AND port = ?",
-            [utils.currentTime(), currentPlayers, maxPlayers, IP, port],
+            [utils.currentTime(), currentNumPlayers, maxNumPlayers, IP, port],
             function(err, result)
             {
                 utils.logging.mysql(result);
@@ -494,8 +507,8 @@ utils.config.on('serverHeartbeat', function(IP, port, currentPlayers, maxPlayers
                 'name': IP + ":" + port,
                 'open': 1,
                 'lastTime': utils.currentTime(),
-                'currentPlayers': currentPlayers,
-                'maxPlayers': maxPlayers
+                'currentPlayers': currentNumPlayers,
+                'maxPlayers': maxNumPlayers
             };
             mysqlConn.query("INSERT INTO servers SET ?", data,
             function(err, result)
@@ -525,10 +538,15 @@ function updateServers(callback)
         servers = [];
         serverIPList = [];
         expiryTime = utils.currentTime() - 30;
+        currentPlayers = 0;
+        maxPlayers = 0;
         for (var key in rows)
         {
             serverIPList.push(rows[key]['IP']);
             serverIPPortList.push(rows[key]['IP'] + rows[key]['port']);
+            currentPlayers += rows[key]['currentPlayers'];
+            maxPlayers += rows[key]['maxPlayers'];
+
             if (rows[key]['open'] === 1 && rows[key]['lastTime'] > expiryTime)
             {
                 servers.push(rows[key]);
@@ -556,6 +574,35 @@ setInterval(function()
             updateServers();
         });
 }, 36000); //1 hour
+
+if (nconf.getBoolean('loadbalancer:realms:enabled') === true)
+{
+    //Send PocketMine Realms heartbeat
+    setInterval(function()
+    {
+        request.post('http://peoapi.minecraft.net/server/heartbeat',
+        {
+            'form': {
+                'ip': nconf.get('loadbalancer:realms:externalAddress'),
+                'port': nconf.get('loadbalancer:realms:externalPort'),
+                'ownerName': nconf.get('loadbalancer:realms:externalAddress'),
+                'name': nconf.get('loadbalancer:realms:serverName'),
+                'maxNrPlayers': maxPlayers,
+                'nrPlayers': currentPlayers,
+                'type': nconf.get('loadbalancer:realms:type'),
+                'whitelist': false
+            }
+        },
+        function(error, response, body)
+        {
+            /*if (error)
+            {
+                console.log(error);
+            }
+            console.log(body);*/
+        });
+    }, 45000); //45 seconds
+}
 
 function setupMySQL()
 {

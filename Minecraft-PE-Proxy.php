@@ -52,6 +52,7 @@ class ProxyHeartbeat implements Plugin
             console("[ERROR] [Proxy] Please set your proxyPort.");
             ++$error;
         }*/
+        console($this->server->api->getProperty("white-list"));
         if($error === 0)
         {
             //TODO: Fix time interval
