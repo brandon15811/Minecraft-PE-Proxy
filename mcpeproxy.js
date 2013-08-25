@@ -65,7 +65,7 @@ nconf.defaults({
             'externalPort': '',
             'ownerName': '',
             'serverName': '',
-            'type': 1
+            'type': ''
         }
     },
     'logging': {
